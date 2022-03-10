@@ -1,0 +1,9 @@
+1.收起状态：触碰this，QQ moveOut but 没有焦点(just View)，此时移开鼠标则 moveIn（不打扰用户看视频等）
+
+2.收起状态：点击任务栏图标 or Alt+Tab获取焦点，则moveOut
+
+3.侧边栏状态：将焦点转移 && 鼠标移出QQ区域，则moveIn
+
+4.最小化：达咩 会被瞬间恢复 并moveIN
+
+5.新增左滑手势 侧边栏状态：moveIn 前置悬停状态：moveToSide
