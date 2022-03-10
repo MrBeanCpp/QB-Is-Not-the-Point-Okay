@@ -1,8 +1,8 @@
 # QB Is Not the Point Okay
 
 #### 介绍
-QB Is Not the Point Okay（QINPO：ちんぽう：珍宝）
-or QQFolower
+QB Is Not the Point Okay（QINPO：ちんぽう：珍宝）  
+or QQFolower  
 跟随 Tencent QQ 并赋予其侧边隐藏能力
 
 #### 软件架构
