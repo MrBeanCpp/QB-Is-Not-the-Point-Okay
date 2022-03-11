@@ -17,9 +17,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     main.cpp \
+    systemtray.cpp \
     widget.cpp
 
 HEADERS += \
+    systemtray.h \
     widget.h
 
 FORMS += \
@@ -32,3 +34,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     readme.txt
+
+RC_ICONS = images/icon.ico
+
+TARGET = "QQ Follower"

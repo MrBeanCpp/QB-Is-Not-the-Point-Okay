@@ -12,14 +12,22 @@ Widget::Widget(QWidget* parent)
 {
     ui->setupUi(this);
 
+    setWindowTitle("QB Is Not the Point Okay?");
+
     setWindowFlag(Qt::FramelessWindowHint);
     setWindowFlag(Qt::WindowStaysOnTopHint);
 
     setFocusPolicy(Qt::StrongFocus);
-    setMouseTracking(true);
+    //setMouseTracking(true);
     setWindowOpacity(0.8); //做一下方块动画-----------------------&& 安置nomove按钮--------------------------------------------------------------------------！！！！！！！-----
     showMinimized(); //
     QtWin::taskbarDeleteTab(this); //删除任务栏图标 //showMinimized()之后delete 否则size有些不正常
+
+    setAutoFillBackground(true); //to使用QPalette
+    setBGColor(defaultColor);
+
+    SystemTray* sysTray = new SystemTray(this);
+    sysTray->show();
 
     timeLine = new QTimeLine(500, this);
     timeLine->setUpdateInterval(10);
@@ -74,7 +82,7 @@ Widget::Widget(QWidget* parent)
                 return;
             }
 
-            if (!GetKey(VK_LBUTTON)) { //松开鼠标（避免在拖动窗口）
+            if (!GetKey(VK_LBUTTON) && isAutoHide) { //松开鼠标（避免在拖动窗口）
                 QRect qqRect = getQQRect();
                 if (qqRect.x() > 0 && qqRect.x() <= 50) { //吸附效果
                     moveQQWindow(0, qqRect.y(), qqRect.width(), qqRect.height());
@@ -105,16 +113,14 @@ Widget::Widget(QWidget* parent)
                 qDebug() << "QQ subWin";
             } else {
                 qDebug() << "other";
-                if (isQQMini() == false) {
-                    if (isQQSideState() && !isCursorOnQQ()) {
-                        //转移焦点 否则 当其他窗口关闭时 操作系统会默认将焦点转移至QQ导致isQQHideState()会moveOut();
-                        //getInputFocus(); //该函数会导致实际抢夺其他窗口焦点
-                        //SwitchToThisWindow(getHwnd(), true); //利用该函数的bug达成目的：实际不抢夺焦点 //遇到系统窗口还是会失败
-                        //setFocus();
-                        BringWindowToTop(getHwnd()); //根据ShowWindow()中SW_MINIMIZE的解释：最小化指定窗口并激活 Z-Order 中的下一个顶级窗口
-                            //所以只要提升到同类Z序顶端即可（注：之前误以为是获取焦点的最后一个窗口 是因为取得焦点相当于bringToTop in 同级别）
-                        moveIn();
-                    }
+                if (isAutoHide && isQQSideState() && !isCursorOnQQ() && !isCursorOnMe()) {
+                    //转移焦点 否则 当其他窗口关闭时 操作系统会默认将焦点转移至QQ导致isQQHideState()会moveOut();
+                    //getInputFocus(); //该函数会导致实际抢夺其他窗口焦点
+                    //SwitchToThisWindow(getHwnd(), true); //利用该函数的bug达成目的：实际不抢夺焦点 //遇到系统窗口还是会失败
+                    //setFocus();
+                    BringWindowToTop(getHwnd()); //根据ShowWindow()中SW_MINIMIZE的解释：最小化指定窗口并激活 Z-Order 中的下一个顶级窗口
+                        //所以只要提升到同类Z序顶端即可（注：之前误以为是获取焦点的最后一个窗口 是因为取得焦点相当于bringToTop in 同级别）
+                    moveIn();
                 }
             }
         }
@@ -289,6 +295,18 @@ bool Widget::isCursorOnQQ()
     return getQQRect().contains(QCursor::pos());
 }
 
+bool Widget::isCursorOnMe()
+{
+    return geometry().contains(QCursor::pos());
+}
+
+void Widget::setBGColor(const QColor& color)
+{
+    QPalette palette(this->palette());
+    palette.setColor(QPalette::Background, color);
+    setPalette(palette);
+}
+
 void Widget::enterEvent(QEvent* event)
 {
     Q_UNUSED(event)
@@ -309,11 +327,12 @@ void Widget::enterEvent(QEvent* event)
 void Widget::leaveEvent(QEvent* event)
 {
     Q_UNUSED(event)
-    static const int SlideTL = 500; //slide Time Limit(ms)
-    if (isTimeLineRunning() == false) {
+    static const int SlideTL = 50; //slide Time Limit(ms)
+    if (isTimeLineRunning() == false && isAutoHide) {
         QPoint leavePos = QCursor::pos();
         QTime leaveTime = QTime::currentTime();
         if (leavePos.x() < enterInfo.first.x() && enterInfo.second.msecsTo(leaveTime) < SlideTL) { //左滑手势
+            //qDebug() << "slide:" << enterInfo.second.msecsTo(leaveTime);
             if (isQQSideState()) { //此时焦点在QQ or this上
                 getInputFocus(); //转移焦点 否则 isQQHideState()会moveOut();
                 moveIn();
@@ -335,4 +354,22 @@ bool Widget::nativeEvent(const QByteArray& eventType, void* message, long* resul
         return true;
     }
     return false; //此处返回false，留给其他事件处理器处理
+}
+
+void Widget::mouseReleaseEvent(QMouseEvent* event)
+{
+}
+
+void Widget::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    Q_UNUSED(event)
+    isAutoHide = !isAutoHide;
+    if (isAutoHide)
+        setBGColor(defaultColor);
+    else
+        setBGColor(sleepColor);
+}
+
+void Widget::mouseMoveEvent(QMouseEvent* event)
+{
 }

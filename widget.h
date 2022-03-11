@@ -1,6 +1,7 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
+#include "systemtray.h"
 #include <QPropertyAnimation>
 #include <QTime>
 #include <QTimeLine>
@@ -48,6 +49,8 @@ public:
     bool isQQSideState(void);
     void stopTraceAnima(void);
     bool isCursorOnQQ(void);
+    bool isCursorOnMe(void);
+    void setBGColor(const QColor& color);
 
 private:
     Ui::Widget* ui;
@@ -61,6 +64,9 @@ private:
     const int Extend = 4;
 
     QPair<QPoint, QTime> enterInfo;
+    bool isAutoHide = true; //自动Hide && 左滑手势 moveToSide 可视为isActive 只剩下follow能力
+    QColor defaultColor = QColor(190, 255, 198);
+    QColor sleepColor = Qt::gray;
 
     // QWidget interface
 protected:
@@ -70,5 +76,11 @@ protected:
     // QWidget interface
 protected:
     bool nativeEvent(const QByteArray& eventType, void* message, long* result) override;
+
+    // QWidget interface
+protected:
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
 };
 #endif // WIDGET_H

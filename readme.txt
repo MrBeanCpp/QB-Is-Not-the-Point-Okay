@@ -7,3 +7,5 @@
 4.最小化：达咩 会被瞬间恢复 并moveIN
 
 5.新增左滑手势 侧边栏状态：moveIn 前置悬停状态：moveToSide
+
+6.双击切换active/inActive 指自动hide & moveToSide能力

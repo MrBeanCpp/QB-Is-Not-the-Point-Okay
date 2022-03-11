@@ -14,9 +14,7 @@
    <string>Widget</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#Widget{
-	background-color: rgb(190, 255, 198);
-}</string>
+   <string notr="true"/>
   </property>
  </widget>
  <resources/>
