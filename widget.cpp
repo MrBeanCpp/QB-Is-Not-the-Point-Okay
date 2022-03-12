@@ -33,7 +33,7 @@ Widget::Widget(QWidget* parent)
     timeLine->setUpdateInterval(10);
     connect(timeLine, &QTimeLine::frameChanged, [=](int frame) {
         QRect qqRect = getQQRect();
-        moveQQWindow(frame, qqRect.y(), qqRect.width(), qqRect.height(), true); //不repaint可能不刷新？
+        moveQQWindow(frame, qqRect.y(), qqRect.width(), qqRect.height(), true); //不repaint可能不刷新？(其实 repaint也不刷新 还得手动sendMessage)
     });
 
     anima_trace = new QPropertyAnimation(this, "pos");
@@ -76,7 +76,7 @@ Widget::Widget(QWidget* parent)
                 qDebug() << "start Timer";
             }
 
-            if (isQQHideState()) { //点击任务栏窗口 || Alt+Tab激活 且qq处于侧边栏隐藏状态
+            if (!isTimeLineRunning() && !isQQAllVisible()) { //点击任务栏窗口 || Alt+Tab激活 且qq处于 侧边栏隐藏状态× 非完全可见状态√ (打开群消息 width会增加 right>>)
                 moveOut();
                 SendMessageA(qqHwnd, WM_PAINT, 0, 0); //重绘(否则消息不能更新) (UpdateWindow无效)
                 return;
@@ -280,6 +280,12 @@ bool Widget::isQQSideState()
 {
     QRect qqRect = getQQRect();
     return qqRect.x() == 0;
+}
+
+bool Widget::isQQAllVisible()
+{
+    QRect qqRect = getQQRect();
+    return qqRect.x() >= 0;
 }
 
 void Widget::stopTraceAnima()

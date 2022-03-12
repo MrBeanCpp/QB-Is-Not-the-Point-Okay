@@ -47,6 +47,7 @@ public:
     void setInputFocus(HWND hwnd); //设置其他窗口焦点 前提是自己已获得焦点
     bool isQQHideState(void);
     bool isQQSideState(void);
+    bool isQQAllVisible(void);
     void stopTraceAnima(void);
     bool isCursorOnQQ(void);
     bool isCursorOnMe(void);
