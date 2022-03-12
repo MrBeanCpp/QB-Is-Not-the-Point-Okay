@@ -186,7 +186,7 @@ void Widget::moveQQWindow(int X, int Y, int nWidth, int nHeight, WINBOOL bRepain
     if (qqHwnd == nullptr) return;
 
     MoveWindow(qqHwnd, X, Y, nWidth, nHeight, bRepaint);
-    move(X + nWidth, Y + 15);
+    move(X + nWidth - 1, Y + 15); //-1是因为从0开始计数 修正与qqRect.right()的差异
 }
 
 void Widget::moveToQQSide()
