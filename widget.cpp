@@ -75,8 +75,8 @@ Widget::Widget(QWidget* parent)
                 }
                 qDebug() << "start Timer";
             }
-
-            if (!isTimeLineRunning() && !isQQAllVisible()) { //点击任务栏窗口 || Alt+Tab激活 且qq处于 侧边栏隐藏状态× 非完全可见状态√ (打开群消息 width会增加 right>>)
+            //不能用!isQQAllVisible否则导致 [鼠标拖拽入屏幕边缘 自动moveIn] 无法执行
+            if (!isTimeLineRunning() && isQQInvisible()) { //点击任务栏窗口 || Alt+Tab激活 且qq处于 侧边栏隐藏状态× 非完全可见状态√ (打开群消息 width会增加 right>>)
                 moveOut();
                 SendMessageA(qqHwnd, WM_PAINT, 0, 0); //重绘(否则消息不能更新) (UpdateWindow无效)
                 return;
@@ -286,6 +286,12 @@ bool Widget::isQQAllVisible()
 {
     QRect qqRect = getQQRect();
     return qqRect.x() >= 0;
+}
+
+bool Widget::isQQInvisible() //与isQQHideState区分 不那么精确 只要在左边看不见即可
+{
+    QRect qqRect = getQQRect();
+    return qqRect.right() <= 0;
 }
 
 void Widget::stopTraceAnima()

@@ -48,6 +48,7 @@ public:
     bool isQQHideState(void);
     bool isQQSideState(void);
     bool isQQAllVisible(void);
+    bool isQQInvisible(void); //in the left
     void stopTraceAnima(void);
     bool isCursorOnQQ(void);
     bool isCursorOnMe(void);
