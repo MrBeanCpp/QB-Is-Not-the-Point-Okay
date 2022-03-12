@@ -19,7 +19,7 @@ Widget::Widget(QWidget* parent)
 
     setFocusPolicy(Qt::StrongFocus);
     //setMouseTracking(true);
-    setWindowOpacity(0.8); //做一下方块动画-----------------------&& 安置nomove按钮--------------------------------------------------------------------------！！！！！！！-----
+    setWindowOpacity(0.9); //做一下方块动画-----------------------&& 安置nomove按钮--------------------------------------------------------------------------！！！！！！！-----
     showMinimized(); //
     QtWin::taskbarDeleteTab(this); //删除任务栏图标 //showMinimized()之后delete 否则size有些不正常
 
@@ -296,9 +296,11 @@ bool Widget::isQQInvisible() //与isQQHideState区分 不那么精确 只要在�
 
 void Widget::stopTraceAnima()
 {
-    timer_trace->stop();
-    anima_trace->stop();
-    moveToQQSide();
+    if (timer_trace->isActive() || anima_trace->state() == QAbstractAnimation::Running) {
+        timer_trace->stop();
+        anima_trace->stop();
+        moveToQQSide();
+    }
 }
 
 bool Widget::isCursorOnQQ()
@@ -315,8 +317,15 @@ bool Widget::isCursorOnMe()
 void Widget::setBGColor(const QColor& color)
 {
     QPalette palette(this->palette());
-    palette.setColor(QPalette::Background, color);
+    palette.setColor(QPalette::Window, color);
     setPalette(palette);
+}
+
+QRect Widget::getAbsorbRect()
+{
+    QPoint RT = getQQRightTop();
+    QRect Rect(RT, RT);
+    return Rect.marginsAdded(QMargins(32, 30, 32, 50));
 }
 
 void Widget::enterEvent(QEvent* event)
@@ -368,13 +377,32 @@ bool Widget::nativeEvent(const QByteArray& eventType, void* message, long* resul
     return false; //此处返回false，留给其他事件处理器处理
 }
 
+void Widget::mousePressEvent(QMouseEvent* event) //双击也会收到press
+{
+    Q_UNUSED(event)
+    if (isTimeLineRunning()) return;
+
+    curPos = event->screenPos().toPoint();
+    mouseMoveLen = 0;
+    qqAbsorbRect = getAbsorbRect();
+    preColor = this->palette().color(QPalette::Window); //保存原色
+}
+
 void Widget::mouseReleaseEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event)
+
+    if (qqAbsorbRect.contains(pos()))
+        moveToQQSide();
+    else //不在安全区域：quit
+        qApp->quit();
 }
 
 void Widget::mouseDoubleClickEvent(QMouseEvent* event)
 {
     Q_UNUSED(event)
+    if (isTimeLineRunning()) return;
+
     isAutoHide = !isAutoHide;
     if (isAutoHide)
         setBGColor(defaultColor);
@@ -384,4 +412,24 @@ void Widget::mouseDoubleClickEvent(QMouseEvent* event)
 
 void Widget::mouseMoveEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event)
+    if (isTimeLineRunning()) return;
+    if (!(event->buttons() & Qt::LeftButton)) return; //左键按下
+
+    static const int MOVELIMIT = 250;
+    QPoint mousePos = event->screenPos().toPoint();
+    mouseMoveLen += (mousePos - curPos).manhattanLength();
+    mouseMoveLen = qMin(mouseMoveLen, MOVELIMIT); //防止溢出
+
+    if (mouseMoveLen >= MOVELIMIT) { //Hard to drag
+        QPoint newPos = this->pos() + mousePos - curPos;
+        curPos = mousePos;
+        move(newPos);
+    } else
+        QCursor::setPos(curPos); //坚韧不拔
+
+    if (qqAbsorbRect.contains(pos())) //远离安全区域 变色
+        setBGColor(preColor);
+    else
+        setBGColor(dangerColor);
 }

@@ -53,6 +53,7 @@ public:
     bool isCursorOnQQ(void);
     bool isCursorOnMe(void);
     void setBGColor(const QColor& color);
+    QRect getAbsorbRect(void); //获取QQ RightTop 周围可吸附区域
 
 private:
     Ui::Widget* ui;
@@ -67,8 +68,15 @@ private:
 
     QPair<QPoint, QTime> enterInfo;
     bool isAutoHide = true; //自动Hide && 左滑手势 moveToSide 可视为isActive 只剩下follow能力
-    QColor defaultColor = QColor(190, 255, 198);
-    QColor sleepColor = Qt::gray;
+    const QColor defaultColor = QColor(253, 227, 200); //QColor(242, 203, 108); //QColor(190, 255, 198);
+    const QColor sleepColor = QColor(52, 11, 11);
+    const QColor dangerColor = QColor(234, 24, 33);
+
+    //mouseEvent 拖拽Folloer 部分
+    QPoint curPos; //cursor pos
+    int mouseMoveLen = 0;
+    QRect qqAbsorbRect; //可吸附区域
+    QColor preColor;
 
     // QWidget interface
 protected:
@@ -81,6 +89,7 @@ protected:
 
     // QWidget interface
 protected:
+    void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
