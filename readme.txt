@@ -9,3 +9,7 @@
 5.新增左滑手势 侧边栏状态：moveIn 前置悬停状态：moveToSide
 
 6.双击切换active/inActive 指自动hide & moveToSide能力
+
+
+PS:
+1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）

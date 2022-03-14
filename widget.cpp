@@ -59,8 +59,13 @@ Widget::Widget(QWidget* parent)
     QTimer* timer_find = new QTimer(this);
     timer_find->callOnTimeout([=]() {
         HWND hwnd;
-        if (isForeQQChatWindow(&hwnd)) {
-            qDebug() << "Find QQ";
+        HWND foreWindow = GetForegroundWindow();
+        QString title = getWindowText(foreWindow);
+        static const QString PicViewer = "图片查看"; //图片查看器的类与样式难以同Chat区分↓
+
+        if (isForeQQChatWindow(&hwnd) && title != PicViewer) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
+            qDebug() << "Find QQ" << title;
+
             if (qqHwnd != hwnd) { //new Found
                 setAlwaysTop(qqHwnd, false); //取消前一个置顶
                 setAlwaysTop(hwnd);
@@ -109,8 +114,10 @@ Widget::Widget(QWidget* parent)
 
             if (isForeMyself()) {
                 qDebug() << "this";
-            } else if (isInSameThread(qqHwnd, GetForegroundWindow())) { //排除相同线程窗口情况(表情窗口)
+            } else if (isInSameThread(qqHwnd, foreWindow)) { //排除相同线程窗口情况(表情窗口)
                 qDebug() << "QQ subWin";
+                if (title == PicViewer)
+                    setAlwaysTop(foreWindow); //图片查看器需要置顶 否则被遮挡
             } else {
                 qDebug() << "other";
                 if (isAutoHide && isQQSideState() && !isCursorOnQQ() && !isCursorOnMe()) {
@@ -243,6 +250,10 @@ void Widget::getInputFocus()
 {
     HWND foreHwnd = GetForegroundWindow();
     DWORD threadId = GetCurrentThreadId();
+    if (foreHwnd == getHwnd()) {
+        qDebug() << "Already getFocus";
+        return;
+    }
     bool res = AttachThreadInput(GetWindowThreadProcessId(foreHwnd, NULL), threadId, TRUE); //会导致短暂的Windows误认为this==QQ激活状态 导致点击任务栏图标 持续最小化
     qDebug() << "attach:" << res;
     if (res == false) { //如果遇到系统窗口而失败 只能最小化再激活获取焦点
@@ -328,6 +339,20 @@ QRect Widget::getAbsorbRect()
     return Rect.marginsAdded(QMargins(32, 30, 32, 50));
 }
 
+QString Widget::getWindowText(HWND hwnd)
+{
+    static WCHAR text[128];
+    GetWindowTextW(hwnd, text, sizeof(text));
+    return QString::fromWCharArray(text);
+}
+
+void Widget::setAutoHide(bool bAuto)
+{
+    if (isAutoHide == bAuto) return;
+    this->isAutoHide = bAuto;
+    setBGColor(isAutoHide ? defaultColor : sleepColor);
+}
+
 void Widget::enterEvent(QEvent* event)
 {
     Q_UNUSED(event)
@@ -348,7 +373,7 @@ void Widget::enterEvent(QEvent* event)
 void Widget::leaveEvent(QEvent* event)
 {
     Q_UNUSED(event)
-    static const int SlideTL = 50; //slide Time Limit(ms)
+    static constexpr int SlideTL = 50; //slide Time Limit(ms)
     if (isTimeLineRunning() == false && isAutoHide) {
         QPoint leavePos = QCursor::pos();
         QTime leaveTime = QTime::currentTime();
@@ -403,11 +428,7 @@ void Widget::mouseDoubleClickEvent(QMouseEvent* event)
     Q_UNUSED(event)
     if (isTimeLineRunning()) return;
 
-    isAutoHide = !isAutoHide;
-    if (isAutoHide)
-        setBGColor(defaultColor);
-    else
-        setBGColor(sleepColor);
+    setAutoHide(!isAutoHide);
 }
 
 void Widget::mouseMoveEvent(QMouseEvent* event)
@@ -416,7 +437,7 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
     if (isTimeLineRunning()) return;
     if (!(event->buttons() & Qt::LeftButton)) return; //左键按下
 
-    static const int MOVELIMIT = 250;
+    static constexpr int MOVELIMIT = 250;
     QPoint mousePos = event->screenPos().toPoint();
     mouseMoveLen += (mousePos - curPos).manhattanLength();
     mouseMoveLen = qMin(mouseMoveLen, MOVELIMIT); //防止溢出
