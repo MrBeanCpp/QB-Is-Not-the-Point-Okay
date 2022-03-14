@@ -56,6 +56,7 @@ public:
     QRect getAbsorbRect(void); //获取QQ RightTop 周围可吸附区域
     QString getWindowText(HWND hwnd);
     void setAutoHide(bool bAuto);
+    bool isTopMost(HWND hwnd);
 
 private:
     Ui::Widget* ui;

@@ -116,7 +116,7 @@ Widget::Widget(QWidget* parent)
                 qDebug() << "this";
             } else if (isInSameThread(qqHwnd, foreWindow)) { //排除相同线程窗口情况(表情窗口)
                 qDebug() << "QQ subWin";
-                if (title == PicViewer)
+                if (title == PicViewer && !isTopMost(foreWindow)) //防止重复置顶 导致右键菜单无法弹出
                     setAlwaysTop(foreWindow); //图片查看器需要置顶 否则被遮挡
             } else {
                 qDebug() << "other";
@@ -351,6 +351,13 @@ void Widget::setAutoHide(bool bAuto)
     if (isAutoHide == bAuto) return;
     this->isAutoHide = bAuto;
     setBGColor(isAutoHide ? defaultColor : sleepColor);
+}
+
+bool Widget::isTopMost(HWND hwnd)
+{
+    if (hwnd == nullptr) return false;
+    LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+    return style & WS_EX_TOPMOST;
 }
 
 void Widget::enterEvent(QEvent* event)
