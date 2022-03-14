@@ -453,11 +453,8 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
         QPoint newPos = this->pos() + mousePos - curPos;
         curPos = mousePos;
         move(newPos);
+
+        setBGColor(qqAbsorbRect.contains(pos()) ? preColor : dangerColor);
     } else
         QCursor::setPos(curPos); //坚韧不拔
-
-    if (qqAbsorbRect.contains(pos())) //远离安全区域 变色
-        setBGColor(preColor);
-    else
-        setBGColor(dangerColor);
 }
