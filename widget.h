@@ -17,10 +17,13 @@ class Widget : public QWidget
     Q_OBJECT
 
 public:
-    enum STATE {
+    enum State {
         QQ,
+        QQMini,
+        QQsub,
         ME,
-        OTHER
+        OTHER,
+        MISS
     };
 
 public:
@@ -58,12 +61,18 @@ public:
     void setAutoHide(bool bAuto);
     bool isTopMost(HWND hwnd);
     QString getProcessName(HWND hwnd);
+    void setState(State _state);
+    bool isState(State _state);
+
+signals:
+    void stateChanged(State curState, State preState);
+    void qqChatWinChanged(HWND curHwnd, HWND preHwnd);
 
 private:
     Ui::Widget* ui;
 
     HWND qqHwnd = nullptr;
-    bool isQQTop = false;
+    //bool isQQTop = false;
     QTimeLine* timeLine = nullptr;
     QPropertyAnimation* anima_trace = nullptr;
     QTimer* timer_trace = nullptr;
@@ -81,6 +90,8 @@ private:
     int mouseMoveLen = 0;
     QRect qqAbsorbRect; //可吸附区域
     QColor preColor;
+
+    State state = MISS;
 
     // QWidget interface
 protected:

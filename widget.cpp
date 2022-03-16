@@ -20,7 +20,7 @@ Widget::Widget(QWidget* parent)
 
     setFocusPolicy(Qt::StrongFocus);
     //setMouseTracking(true);
-    setWindowOpacity(0.9); //做一下方块动画-----------------------&& 安置nomove按钮--------------------------------------------------------------------------！！！！！！！-----
+    setWindowOpacity(0.9); //做一下方块动画------------------------
     showMinimized(); //
     QtWin::taskbarDeleteTab(this); //删除任务栏图标 //showMinimized()之后delete 否则size有些不正常
 
@@ -36,13 +36,14 @@ Widget::Widget(QWidget* parent)
         QRect qqRect = getQQRect();
         moveQQWindow(frame, qqRect.y(), qqRect.width(), qqRect.height(), true); //不repaint可能不刷新？(其实 repaint也不刷新 还得手动sendMessage)
     });
+    connect(timeLine, &QTimeLine::finished, [=]() { stateChanged(state, state); }); //为了防止isTimeLineRunning时，某些操作无法执行，结束后再发送一遍
 
     anima_trace = new QPropertyAnimation(this, "pos");
     anima_trace->setDuration(100);
 
     timer_trace = new QTimer(this);
     timer_trace->callOnTimeout([=]() {
-        if (isQQTop == false || isTimeLineRunning()) { //move动画时 不要trace 否则鬼畜
+        if (!isState(QQ) || isTimeLineRunning()) { //move动画时 不要trace 否则鬼畜
             anima_trace->stop();
             moveToQQSide();
             return;
@@ -62,80 +63,107 @@ Widget::Widget(QWidget* parent)
         HWND hwnd;
         HWND foreWindow = GetForegroundWindow();
         QString title = getWindowText(foreWindow);
-        //static const QString PicViewer = "图片查看"; //图片查看器的类与样式难以同Chat区分↓
         static const QStringList BlackList = { "图片查看", "屏幕识图", "翻译" }; //类与样式难以同Chat区分↓
 
         if (isForeQQChatWindow(&hwnd) && !BlackList.contains(title)) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
             qDebug() << "Find QQ" << title;
 
-            if (qqHwnd != hwnd) { //new Found
-                setAlwaysTop(qqHwnd, false); //取消前一个置顶
-                setAlwaysTop(hwnd);
+            if (qqHwnd != hwnd) //new Found
+                emit qqChatWinChanged(hwnd, qqHwnd);
+            setState(QQ);
+
+            if (!GetKey(VK_LBUTTON) && isAutoHide) { //松开鼠标（避免在拖动窗口）
+                QRect qqRect = getQQRect();
+                if (qqRect.x() > 0 && qqRect.x() <= 50) { //吸附效果
+                    moveQQWindow(0, qqRect.y(), qqRect.width(), qqRect.height());
+                } else if (!isTimeLineRunning() && qqRect.x() < 0 && qqRect.right() > 0) { //x not in [吸附范围] && x < 0 自动 move in
+                    getInputFocus(); //转移焦点 否则 isQQHideState()会moveOut();
+                    moveIn();
+                }
             }
-            qqHwnd = hwnd;
-            isQQTop = true;
+        } else {
+            stopTraceAnima();
+
+            if (IsWindow(qqHwnd)) {
+                if (isQQMini()) { //点击任务栏图标moveOut 再次点击moveIn 但实际上会最小化(OS) 所以只能手动show
+                    setState(QQMini);
+                } else {
+                    if (isForeMyself()) {
+                        qDebug() << "this";
+                        setState(ME);
+                    } else if (isInSameThread(qqHwnd, foreWindow)) { //排除相同线程窗口情况(表情窗口)
+                        qDebug() << "QQ subWin";
+                        setState(QQsub);
+                        if (BlackList.contains(title) && !isTopMost(foreWindow)) //防止重复置顶 导致右键菜单无法弹出
+                            setAlwaysTop(foreWindow); //需要置顶 否则被遮挡
+                    } else {
+                        qDebug() << "other";
+                        setState(OTHER);
+                        if (isAutoHide && !isTimeLineRunning() && isQQSideState() && !isCursorOnQQ() && !isCursorOnMe()) { //需要持续监测鼠标 所以不能放在stateChanged
+                            //转移焦点 否则 当其他窗口关闭时 操作系统会默认将焦点转移至QQ导致isQQHideState()会moveOut();
+                            /*
+                            //getInputFocus(); //该函数会导致实际抢夺其他窗口焦点
+                            //SwitchToThisWindow(getHwnd(), true); //利用该函数的bug达成目的：实际不抢夺焦点 //遇到系统窗口还是会失败
+                            //setFocus();*/
+                            BringWindowToTop(getHwnd()); //根据ShowWindow()中SW_MINIMIZE的解释：最小化指定窗口并激活 Z-Order 中的下一个顶级窗口
+                                //所以只要提升到同类Z序顶端即可（注：之前误以为是获取焦点的最后一个窗口 是因为取得焦点相当于bringToTop in 同级别）
+                            moveIn();
+                        }
+                    }
+                }
+            } else {
+                setState(MISS);
+            }
+        }
+    });
+    timer_find->start(200);
+
+    connect(this, &Widget::stateChanged, [=](State curState, State preState) {
+        Q_UNUSED(preState)
+
+        switch (curState) {
+        case QQ:
+            if (isMinimized()) {
+                showNormal();
+                SwitchToThisWindow(qqHwnd, true); //转移焦点 to QQ
+            }
             if (!timer_trace->isActive() && !isTimeLineRunning()) {
                 timer_trace->start(40);
-                if (isMinimized()) {
-                    showNormal();
-                    SwitchToThisWindow(qqHwnd, true); //转移焦点 to QQ
-                }
                 qDebug() << "start Timer";
             }
             //不能用!isQQAllVisible否则导致 [鼠标拖拽入屏幕边缘 自动moveIn] 无法执行
             if (!isTimeLineRunning() && isQQInvisible()) { //点击任务栏窗口 || Alt+Tab激活 且qq处于 侧边栏隐藏状态× 非完全可见状态√ (打开群消息 width会增加 right>>)
                 moveOut();
                 SendMessageA(qqHwnd, WM_PAINT, 0, 0); //重绘(否则消息不能更新) (UpdateWindow无效)
-                return;
             }
+            break;
+        case QQsub:
 
-            if (!GetKey(VK_LBUTTON) && isAutoHide) { //松开鼠标（避免在拖动窗口）
-                QRect qqRect = getQQRect();
-                if (qqRect.x() > 0 && qqRect.x() <= 50) { //吸附效果
-                    moveQQWindow(0, qqRect.y(), qqRect.width(), qqRect.height());
-                } else if (isTimeLineRunning() == false && qqRect.x() < 0 && qqRect.right() > 0) { //x not in [吸附范围] && x < 0 自动 move in
-                    getInputFocus(); //转移焦点 否则 isQQHideState()会moveOut();
-                    moveIn();
-                }
-            }
-        } else {
-            isQQTop = false;
-            stopTraceAnima();
+            break;
+        case QQMini:
+            ShowWindow(qqHwnd, SW_SHOWNOACTIVATE); //会闪烁 但没办法了
+            miniAndShow(); //转移焦点 否则 isQQHideState()会moveOut();
+            moveIn();
+            break;
+        case ME:
 
-            if (!IsWindow(qqHwnd)) {
-                showMinimized();
-                return;
-            }
+            break;
+        case OTHER:
 
-            if (isQQMini()) { //点击任务栏图标moveOut 再次点击moveIn 但实际上会最小化(OS) 所以只能手动show
-                ShowWindow(qqHwnd, SW_SHOWNOACTIVATE); //会闪烁 但没办法了
-                miniAndShow(); //转移焦点 否则 isQQHideState()会moveOut();
-                moveIn();
-                return;
-            }
-
-            if (isForeMyself()) {
-                qDebug() << "this";
-            } else if (isInSameThread(qqHwnd, foreWindow)) { //排除相同线程窗口情况(表情窗口)
-                qDebug() << "QQ subWin";
-                if (BlackList.contains(title) && !isTopMost(foreWindow)) //防止重复置顶 导致右键菜单无法弹出
-                    setAlwaysTop(foreWindow); //需要置顶 否则被遮挡
-            } else {
-                qDebug() << "other";
-                if (isAutoHide && isQQSideState() && !isCursorOnQQ() && !isCursorOnMe()) {
-                    //转移焦点 否则 当其他窗口关闭时 操作系统会默认将焦点转移至QQ导致isQQHideState()会moveOut();
-                    //getInputFocus(); //该函数会导致实际抢夺其他窗口焦点
-                    //SwitchToThisWindow(getHwnd(), true); //利用该函数的bug达成目的：实际不抢夺焦点 //遇到系统窗口还是会失败
-                    //setFocus();
-                    BringWindowToTop(getHwnd()); //根据ShowWindow()中SW_MINIMIZE的解释：最小化指定窗口并激活 Z-Order 中的下一个顶级窗口
-                        //所以只要提升到同类Z序顶端即可（注：之前误以为是获取焦点的最后一个窗口 是因为取得焦点相当于bringToTop in 同级别）
-                    moveIn();
-                }
-            }
+            break;
+        case MISS:
+            showMinimized();
+            break;
+        default:
+            break;
         }
-        
     });
-    timer_find->start(200);
+
+    connect(this, &Widget::qqChatWinChanged, [=](HWND curHwnd, HWND preHWND) {
+        setAlwaysTop(preHWND, false); //取消前一个置顶
+        setAlwaysTop(curHwnd);
+        qqHwnd = curHwnd;
+    });
 }
 
 Widget::~Widget()
@@ -378,6 +406,19 @@ QString Widget::getProcessName(HWND hwnd)
 
     QString pathS = QString::fromWCharArray(path);
     return pathS.mid(pathS.lastIndexOf('\\') + 1);
+}
+
+void Widget::setState(State _state)
+{
+    if (state != _state) {
+        emit stateChanged(_state, state);
+        this->state = _state;
+    }
+}
+
+bool Widget::isState(State _state)
+{
+    return this->state == _state;
 }
 
 void Widget::enterEvent(QEvent* event)
