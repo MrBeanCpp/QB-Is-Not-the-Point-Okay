@@ -282,7 +282,8 @@ void Widget::getInputFocus()
 {
     HWND foreHwnd = GetForegroundWindow();
     DWORD threadId = GetCurrentThreadId();
-    if (foreHwnd == getHwnd()) {
+    HWND hwnd = getHwnd();
+    if (foreHwnd == hwnd) {
         qDebug() << "Already getFocus";
         return;
     }
@@ -291,8 +292,8 @@ void Widget::getInputFocus()
     if (res == false) { //如果遇到系统窗口而失败 只能最小化再激活获取焦点
         miniAndShow();
     } else {
-        SetForegroundWindow(getHwnd());
-        SetFocus(getHwnd());
+        SetForegroundWindow(hwnd);
+        SetFocus(hwnd);
         AttachThreadInput(GetWindowThreadProcessId(foreHwnd, NULL), threadId, FALSE);
     }
 }
@@ -434,7 +435,7 @@ void Widget::enterEvent(QEvent* event)
         if (isQQHideState()) //隐藏状态弹出
             moveOut();
         else //可能为左滑手势
-            enterInfo = qMakePair(QCursor::pos(), QTime::currentTime()); //记录入点信息
+            enterInfo = qMakePair(static_cast<QEnterEvent*>(event)->globalPos(), QTime::currentTime()); //记录入点信息//QCursor::pos()是目前状态 不是事件发生时的pos
     }
 }
 
@@ -443,8 +444,9 @@ void Widget::leaveEvent(QEvent* event)
     Q_UNUSED(event)
     static constexpr int SlideTL = 50; //slide Time Limit(ms)
     if (isTimeLineRunning() == false && isAutoHide) {
-        QPoint leavePos = QCursor::pos();
+        QPoint leavePos = QCursor::pos(); //没有QLeaveEvent（只有QEnterEvent） 无法获取当时pos 为啥没有呀？？
         QTime leaveTime = QTime::currentTime();
+        //qDebug() << "slide:" << enterInfo.second.msecsTo(leaveTime) << leavePos.x() << enterInfo.first.x();
         if (leavePos.x() < enterInfo.first.x() && enterInfo.second.msecsTo(leaveTime) < SlideTL) { //左滑手势
             //qDebug() << "slide:" << enterInfo.second.msecsTo(leaveTime);
             if (isQQSideState()) { //此时焦点在QQ or this上
