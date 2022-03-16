@@ -57,6 +57,7 @@ public:
     QString getWindowText(HWND hwnd);
     void setAutoHide(bool bAuto);
     bool isTopMost(HWND hwnd);
+    QString getProcessName(HWND hwnd);
 
 private:
     Ui::Widget* ui;

@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QtWin>
 #include <cmath>
+#include <psapi.h>
 #define GetKey(X) (GetAsyncKeyState(X) & 0x8000)
 
 Widget::Widget(QWidget* parent)
@@ -61,9 +62,10 @@ Widget::Widget(QWidget* parent)
         HWND hwnd;
         HWND foreWindow = GetForegroundWindow();
         QString title = getWindowText(foreWindow);
-        static const QString PicViewer = "图片查看"; //图片查看器的类与样式难以同Chat区分↓
+        //static const QString PicViewer = "图片查看"; //图片查看器的类与样式难以同Chat区分↓
+        static const QStringList BlackList = { "图片查看", "屏幕识图", "翻译" }; //类与样式难以同Chat区分↓
 
-        if (isForeQQChatWindow(&hwnd) && title != PicViewer) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
+        if (isForeQQChatWindow(&hwnd) && !BlackList.contains(title)) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
             qDebug() << "Find QQ" << title;
 
             if (qqHwnd != hwnd) { //new Found
@@ -116,8 +118,8 @@ Widget::Widget(QWidget* parent)
                 qDebug() << "this";
             } else if (isInSameThread(qqHwnd, foreWindow)) { //排除相同线程窗口情况(表情窗口)
                 qDebug() << "QQ subWin";
-                if (title == PicViewer && !isTopMost(foreWindow)) //防止重复置顶 导致右键菜单无法弹出
-                    setAlwaysTop(foreWindow); //图片查看器需要置顶 否则被遮挡
+                if (BlackList.contains(title) && !isTopMost(foreWindow)) //防止重复置顶 导致右键菜单无法弹出
+                    setAlwaysTop(foreWindow); //需要置顶 否则被遮挡
             } else {
                 qDebug() << "other";
                 if (isAutoHide && isQQSideState() && !isCursorOnQQ() && !isCursorOnMe()) {
@@ -150,8 +152,10 @@ bool Widget::isForeQQChatWindow(HWND* qqHwnd)
     if (className == "TXGuiFoundation") { //类名
         LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
         if (style == 0x960F0000) { //样式名
-            if (qqHwnd) *qqHwnd = hwnd;
-            return true;
+            if (getProcessName(hwnd) == "QQ.exe") { //增加对进程名的判断，防止Tencent其他产品乱入（腾讯会议）
+                if (qqHwnd) *qqHwnd = hwnd;
+                return true;
+            }
         }
     }
     return false;
@@ -358,6 +362,22 @@ bool Widget::isTopMost(HWND hwnd)
     if (hwnd == nullptr) return false;
     LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
     return style & WS_EX_TOPMOST;
+}
+
+QString Widget::getProcessName(HWND hwnd)
+{
+    if (hwnd == nullptr) return QString();
+
+    DWORD PID = -1; //not NULL
+    GetWindowThreadProcessId(hwnd, &PID);
+
+    static WCHAR path[128];
+    HANDLE Process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, PID);
+    GetProcessImageFileNameW(Process, path, sizeof(path));
+    CloseHandle(Process);
+
+    QString pathS = QString::fromWCharArray(path);
+    return pathS.mid(pathS.lastIndexOf('\\') + 1);
 }
 
 void Widget::enterEvent(QEvent* event)
