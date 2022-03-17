@@ -72,12 +72,13 @@ private:
     Ui::Widget* ui;
 
     HWND qqHwnd = nullptr;
-    //bool isQQTop = false;
     QTimeLine* timeLine = nullptr;
     QPropertyAnimation* anima_trace = nullptr;
     QTimer* timer_trace = nullptr;
 
-    const int Extend = 4;
+    //constexpr在编译期确定 而数据成员在运行期初始化 矛盾 所以只能是static
+    static constexpr int Extend = 5; //Hide后 露出部分
+    static constexpr int MarginTop = 15;
 
     QPair<QPoint, QTime> enterInfo;
     bool isAutoHide = true; //自动Hide && 左滑手势 moveToSide 可视为isActive 只剩下follow能力
@@ -108,5 +109,9 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+
+    // QWidget interface
+protected:
+    void paintEvent(QPaintEvent* event) override;
 };
 #endif // WIDGET_H

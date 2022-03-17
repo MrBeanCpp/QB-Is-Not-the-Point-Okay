@@ -2,6 +2,7 @@
 #include "ui_widget.h"
 #include <QDebug>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QtWin>
 #include <cmath>
 #include <psapi.h>
@@ -205,7 +206,7 @@ QRect Widget::getQQRect()
 QPoint Widget::getQQRightTop()
 {
     QRect qqRect = getQQRect();
-    return QPoint(qqRect.right(), qqRect.top() + 15);
+    return QPoint(qqRect.right(), qqRect.top() + MarginTop);
 }
 
 void Widget::jumpToTop()
@@ -225,7 +226,7 @@ void Widget::moveQQWindow(int X, int Y, int nWidth, int nHeight, WINBOOL bRepain
     if (qqHwnd == nullptr) return;
 
     MoveWindow(qqHwnd, X, Y, nWidth, nHeight, bRepaint);
-    move(X + nWidth - 1, Y + 15); //-1是因为从0开始计数 修正与qqRect.right()的差异
+    move(X + nWidth - 1, Y + MarginTop); //-1是因为从0开始计数 修正与qqRect.right()的差异
 }
 
 void Widget::moveToQQSide()
@@ -521,4 +522,18 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
         setBGColor(qqAbsorbRect.contains(pos()) ? preColor : dangerColor);
     } else
         QCursor::setPos(curPos); //坚韧不拔
+}
+
+void Widget::paintEvent(QPaintEvent* event)
+{
+    QPainter painter(this);
+    static QPen pen(Qt::darkGray, 2); //有1px在外部
+    painter.setPen(pen);
+    painter.drawRect(this->rect());
+
+    static constexpr int Margin_X = 8, Margin_Y = 15;
+    static QPen penLine(QColor(80, 80, 80, 135), 4, Qt::SolidLine, Qt::RoundCap);
+    painter.setPen(penLine);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.drawLine(rect().topRight() + QPoint(-Margin_X, Margin_Y + 1), rect().bottomRight() + QPoint(-Margin_X, -Margin_Y));
 }
