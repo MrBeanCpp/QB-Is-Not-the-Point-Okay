@@ -281,20 +281,22 @@ bool Widget::isInSameThread(HWND hwnd_1, HWND hwnd_2)
 void Widget::getInputFocus()
 {
     HWND foreHwnd = GetForegroundWindow();
+    DWORD foreTID = GetWindowThreadProcessId(foreHwnd, NULL);
     DWORD threadId = GetCurrentThreadId();
     HWND hwnd = getHwnd();
     if (foreHwnd == hwnd) {
         qDebug() << "Already getFocus";
         return;
     }
-    bool res = AttachThreadInput(GetWindowThreadProcessId(foreHwnd, NULL), threadId, TRUE); //会导致短暂的Windows误认为this==QQ激活状态 导致点击任务栏图标 持续最小化
+    bool res = AttachThreadInput(threadId, foreTID, TRUE); //会导致短暂的Windows误认为this==QQ激活状态 导致点击任务栏图标 持续最小化（参见下方解决法案）
     qDebug() << "attach:" << res;
     if (res == false) { //如果遇到系统窗口而失败 只能最小化再激活获取焦点
         miniAndShow();
     } else {
+        SetForegroundWindow(foreHwnd); //刷新QQ任务栏图标状态 防止保持焦点状态 不更新 导致点击后 最小化 而非获取焦点
         SetForegroundWindow(hwnd);
         SetFocus(hwnd);
-        AttachThreadInput(GetWindowThreadProcessId(foreHwnd, NULL), threadId, FALSE);
+        AttachThreadInput(threadId, foreTID, FALSE);
     }
 }
 
@@ -448,7 +450,6 @@ void Widget::leaveEvent(QEvent* event)
         QTime leaveTime = QTime::currentTime();
         //qDebug() << "slide:" << enterInfo.second.msecsTo(leaveTime) << leavePos.x() << enterInfo.first.x();
         if (leavePos.x() < enterInfo.first.x() && enterInfo.second.msecsTo(leaveTime) < SlideTL) { //左滑手势
-            //qDebug() << "slide:" << enterInfo.second.msecsTo(leaveTime);
             if (isQQSideState()) { //此时焦点在QQ or this上
                 getInputFocus(); //转移焦点 否则 isQQHideState()会moveOut();
                 moveIn();
