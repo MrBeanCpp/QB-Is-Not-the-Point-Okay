@@ -21,3 +21,7 @@ PS:
 
 4.getInputFocus() bug:易导致this取得焦点 并成为前台后 QQ的任务栏图标还是选中状态没有更新，导致点击后 直接最小化 而非选中
 解决办法：在设置this前台前，先设置QQ为前台，完成更新效果
+
+5.SendMessage是阻塞函数 可能会挂起 建议改为PostMessage立即返回
+
+6.ShowWindowAsync异步 防止无响应挂起(组合操作不要异步 要等前一步完成)
