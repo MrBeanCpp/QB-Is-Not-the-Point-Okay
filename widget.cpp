@@ -131,7 +131,8 @@ Widget::Widget(QWidget* parent)
                 qDebug() << "start Timer";
             }
             //不能用!isQQAllVisible否则导致 [鼠标拖拽入屏幕边缘 自动moveIn] 无法执行
-            if (!isTimeLineRunning() && isQQInvisible()) { //点击任务栏窗口 || Alt+Tab激活 且qq处于 侧边栏隐藏状态× 非完全可见状态√ (打开群消息 width会增加 right>>)
+            //可以用!isQQAllVisible 因为改为了stateChanged机制 只会触发一次 否则//打开群消息 width会增加 right++ >0 导致不能moveOut 直接moveIn
+            if (!isTimeLineRunning() && !isQQAllVisible() && !GetKey(VK_LBUTTON)) { //点击任务栏窗口 || Alt+Tab激活 且qq处于 侧边栏隐藏状态× 非完全可见状态√ (打开群消息 width会增加 right>>)
                 moveOut();
                 qq.repaint(); //重绘(否则消息不能更新)
             }
