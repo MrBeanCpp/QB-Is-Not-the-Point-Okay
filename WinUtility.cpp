@@ -1,5 +1,7 @@
 #include "WinUtility.h"
 #include <QDebug>
+#include <QMessageBox>
+#include <cstring>
 #include <psapi.h>
 void Win::setAlwaysTop(HWND hwnd, bool isTop)
 {
@@ -28,8 +30,10 @@ bool Win::isTopMost(HWND hwnd)
 
 QString Win::getWindowText(HWND hwnd)
 {
+    if (hwnd == nullptr) return QString();
+
     static WCHAR text[128];
-    GetWindowTextW(hwnd, text, sizeof(text));
+    GetWindowTextW(hwnd, text, _countof(text)); //sizeof(text)字节数256 内存溢出
     return QString::fromWCharArray(text);
 }
 
@@ -54,7 +58,7 @@ QString Win::getProcessName(HWND hwnd)
 
     static WCHAR path[128];
     HANDLE Process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, PID);
-    GetProcessImageFileNameW(Process, path, sizeof(path));
+    GetProcessImageFileNameW(Process, path, _countof(path)); //sizeof(path)字节数256 内存溢出
     CloseHandle(Process);
 
     QString pathS = QString::fromWCharArray(path);

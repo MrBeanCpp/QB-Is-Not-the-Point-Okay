@@ -7,7 +7,7 @@ QQChatWin::QQChatWin()
 bool QQChatWin::isChatWin(HWND hwnd) //可能会误判 //图片查看器 翻译 屏幕识图 类与样式难以同Chat区分↓
 {
     static WCHAR buffer[128];
-    GetClassNameW(hwnd, buffer, sizeof(buffer));
+    GetClassNameW(hwnd, buffer, _countof(buffer)); //sizeof字节数 会溢出
     QString className = QString::fromWCharArray(buffer);
     if (className == "TXGuiFoundation") { //类名
         LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);

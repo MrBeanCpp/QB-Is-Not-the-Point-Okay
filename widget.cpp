@@ -1,6 +1,7 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include <QDebug>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QtWin>
@@ -65,8 +66,7 @@ Widget::Widget(QWidget* parent)
         static const QStringList BlackList = { "图片查看", "屏幕识图", "翻译" }; //类与样式难以同Chat区分↓
 
         if (QQChatWin::isChatWin(foreWin) && !BlackList.contains(title)) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
-            qDebug() << "Find QQ" << title;
-
+            //qDebug() << "Find QQ" << title;
             if (qq.winId() != foreWin) //new Found
                 emit qqChatWinChanged(foreWin, qq.winId());
             setState(QQ);
@@ -88,15 +88,17 @@ Widget::Widget(QWidget* parent)
                     setState(QQMini);
                 } else {
                     if (isForeMyself()) {
-                        qDebug() << "this";
+                        //qDebug() << "this";
                         setState(ME);
                     } else if (qq.isInSameThread(foreWin)) { //排除相同线程窗口情况(表情窗口)
-                        qDebug() << "QQ subWin";
+                        //qDebug() << "QQ subWin";
                         setState(QQsub);
-                        if (BlackList.contains(title) && !Win::isTopMost(foreWin)) //防止重复置顶 导致右键菜单无法弹出
+                        if (BlackList.contains(title) && !Win::isTopMost(foreWin)) { //防止重复置顶 导致右键菜单无法弹出
                             Win::setAlwaysTop(foreWin); //需要置顶 否则被遮挡
+                            qDebug() << "setTop:" << foreWin << title;
+                        }
                     } else {
-                        qDebug() << "other";
+                        //qDebug() << "other";
                         setState(OTHER);
                         if (isAutoHide && !isTimeLineRunning() && isQQSideState() && !qq.isUnderMouse() && !underMouse()) { //需要持续监测鼠标 所以不能放在stateChanged
                             //转移焦点 否则 当其他窗口关闭时 操作系统会默认将焦点转移至QQ导致isQQHideState()会moveOut();
@@ -122,6 +124,7 @@ Widget::Widget(QWidget* parent)
 
         switch (curState) {
         case QQ:
+            qDebug() << "Find QQ";
             if (isMinimized()) {
                 showNormal();
                 SwitchToThisWindow(qq.winId(), true); //转移焦点 to QQ
@@ -138,20 +141,22 @@ Widget::Widget(QWidget* parent)
             }
             break;
         case QQsub:
-
+            qDebug() << "QQ sub";
             break;
         case QQMini:
+            qDebug() << "QQ mini";
             ShowWindowAsync(qq.winId(), SW_SHOWNOACTIVATE); //会闪烁 但没办法了 //异步防止QQ无响应
             Win::miniAndShow(winID()); //转移焦点 否则 isQQHideState()会moveOut(); 按住任务栏->other 松开->miniQQ 然后焦点转移 QQshow 焦点又回来了...
             moveIn();
             break;
         case ME:
-
+            qDebug() << "this";
             break;
         case OTHER:
-
+            qDebug() << "other";
             break;
         case MISS:
+            qDebug() << "#miss";
             showMinimized();
             break;
         default:
@@ -298,7 +303,7 @@ bool Widget::isState(State _state)
     return this->state == _state;
 }
 
-void Widget::enterEvent(QEvent* event)
+void Widget::enterEvent(QEvent* event) //指针应该很安全 不检查了
 {
     Q_UNUSED(event)
     if (isTimeLineRunning() == false) { //模拟click会误触其他位置
@@ -349,7 +354,6 @@ bool Widget::nativeEvent(const QByteArray& eventType, void* message, long* resul
 
 void Widget::mousePressEvent(QMouseEvent* event) //双击也会收到press
 {
-    Q_UNUSED(event)
     if (isTimeLineRunning()) return;
 
     curPos = event->screenPos().toPoint();
@@ -362,7 +366,7 @@ void Widget::mouseReleaseEvent(QMouseEvent* event)
 {
     Q_UNUSED(event)
 
-    if (qqAbsorbRect.contains(pos()))
+    if (getAbsorbRect().contains(pos())) //实时计算 增加可靠性
         moveToQQSide();
     else //不在安全区域：quit
         qApp->quit();
@@ -410,4 +414,6 @@ void Widget::paintEvent(QPaintEvent* event)
     painter.setPen(penLine);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.drawLine(rect().topRight() + QPoint(-Margin_X, Margin_Y + 1), rect().bottomRight() + QPoint(-Margin_X, -Margin_Y));
+
+    qDebug() << "paint";
 }

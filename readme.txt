@@ -25,3 +25,9 @@ PS:
 5.SendMessage是阻塞函数 可能会挂起 建议改为PostMessage立即返回
 
 6.ShowWindowAsync异步 防止无响应挂起(组合操作不要异步 要等前一步完成)
+
+7.bug：与QQ Follower无关(quit)， 将QQ窗口左右晃动 导致Chrome 最小化后 再晃动恢复 导致Chrome获得TOPMOST，可能由于QQ有TOPMOST属性
+
+8.雷神加速器 会干扰GetKey & AttachThreadInput
+
+9.### GetWindowTextW GetProcessImageFileNameW GetClassNameW：TCHAR数组 用sizeof获取字符数 导致溢出，应用_countof
