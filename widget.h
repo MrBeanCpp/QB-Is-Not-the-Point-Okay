@@ -28,6 +28,8 @@ public:
         MISS
     };
 
+    using KeyList = QList<BYTE>;
+
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
@@ -79,6 +81,7 @@ private:
     QTimeLine* timeLine = nullptr;
     QPropertyAnimation* anima_trace = nullptr;
     QTimer* timer_trace = nullptr;
+    SystemTray* sysTray = nullptr;
 
     //constexpr在编译期确定 而数据成员在运行期初始化 矛盾 所以只能是static
     static constexpr int Extend = 5; //Hide后 露出部分
@@ -113,6 +116,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
 
     // QWidget interface
 protected:

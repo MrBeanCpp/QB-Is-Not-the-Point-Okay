@@ -15,6 +15,8 @@ public:
     static DWORD getProcessID(HWND hwnd);
     static QString getProcessName(HWND hwnd);
     static void getInputFocus(HWND hwnd);
+    static void simulateKeyEvent(const QList<BYTE>& keys);
+    static bool isForeWindow(HWND hwnd);
 };
 
 #endif // WIN_H

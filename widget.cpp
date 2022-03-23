@@ -28,7 +28,7 @@ Widget::Widget(QWidget* parent)
     setAutoFillBackground(true); //to使用QPalette
     setBGColor(defaultColor);
 
-    SystemTray* sysTray = new SystemTray(this);
+    sysTray = new SystemTray(this);
     sysTray->show();
 
     timeLine = new QTimeLine(500, this);
@@ -145,7 +145,7 @@ Widget::Widget(QWidget* parent)
             break;
         case QQMini:
             qDebug() << "QQ mini";
-            ShowWindowAsync(qq.winId(), SW_SHOWNOACTIVATE); //会闪烁 但没办法了 //异步防止QQ无响应
+            ShowWindow(qq.winId(), SW_SHOWNOACTIVATE); //会闪烁 但没办法了 //同步函数 防止qq还未还原 就移动 导致窗口错位
             Win::miniAndShow(winID()); //转移焦点 否则 isQQHideState()会moveOut(); 按住任务栏->other 松开->miniQQ 然后焦点转移 QQshow 焦点又回来了...
             moveIn();
             break;
@@ -170,6 +170,8 @@ Widget::Widget(QWidget* parent)
         qq.setWindow(curHwnd);
         //qqHwnd = curHwnd;
     });
+
+    sysTray->showMessage("Info", "QB Started");
 }
 
 Widget::~Widget()
@@ -179,7 +181,7 @@ Widget::~Widget()
 
 bool Widget::isForeMyself()
 {
-    return GetForegroundWindow() == winID();
+    return Win::isForeWindow(winID());
 }
 
 QPoint Widget::getQQRightTop()
@@ -306,6 +308,8 @@ bool Widget::isState(State _state)
 void Widget::enterEvent(QEvent* event) //指针应该很安全 不检查了
 {
     Q_UNUSED(event)
+    qDebug() << "enter";
+
     if (isTimeLineRunning() == false) { //模拟click会误触其他位置
         //getInputFocus(); //获取焦点 否则还会缩回去//某些特殊窗口 如任务管理器在前台时 会阻止该函数
         //moveOut(); √
@@ -313,7 +317,7 @@ void Widget::enterEvent(QEvent* event) //指针应该很安全 不检查了
         //setInputFocus(qqHwnd);
         //#No! 此种情况 鼠标触碰弹出 不应该获取焦点 只moveOut，鼠标移开后自动moveIn（不影响看视频等操作 Just View）
 
-        if (isQQHideState()) //隐藏状态弹出
+        if (!isQQAllVisible()) //隐藏状态弹出 //可以尝试改为!isQQAllVisible增加鲁棒性//休眠后QQ窗口会向左位移 不能用isQQHideState判断
             moveOut();
         else //可能为左滑手势
             enterInfo = qMakePair(static_cast<QEnterEvent*>(event)->globalPos(), QTime::currentTime()); //记录入点信息//QCursor::pos()是目前状态 不是事件发生时的pos
@@ -368,8 +372,10 @@ void Widget::mouseReleaseEvent(QMouseEvent* event)
 
     if (getAbsorbRect().contains(pos())) //实时计算 增加可靠性
         moveToQQSide();
-    else //不在安全区域：quit
+    else { //不在安全区域：quit
+        sysTray->showMessage("Info", QString("About to [Quit] bye\nstate: %1 %2 %3").arg(qq.isMini()).arg(qq.rect().x()).arg(qq.rect().right()));
         qApp->quit();
+    }
 }
 
 void Widget::mouseDoubleClickEvent(QMouseEvent* event)
@@ -399,6 +405,29 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
         setBGColor(qqAbsorbRect.contains(pos()) ? preColor : dangerColor);
     } else
         QCursor::setPos(curPos); //坚韧不拔
+}
+
+void Widget::wheelEvent(QWheelEvent* event) //1.设置QQ焦点 2.使用SendMessage配合？消息到达时间 错位 对方有焦点时 失败 SendMessage to QQ failed Post ok
+{
+    if (!Win::isForeWindow(qq.winId())) {
+        Win::getInputFocus(winID()); //自己获得焦点后才能设置其他窗口焦点
+        Win::getInputFocus(qq.winId());
+    }
+
+    if (event->delta() > 0) { //模拟Ctrl+Shift+Tab向上切换QQ消息窗口 //Ctrl+↑↓会有系统提示音 很烦
+        Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_SHIFT, VK_TAB }));
+    } else { //模拟Ctrl+Tab向下切换QQ消息窗口
+        Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_TAB }));
+
+        /*实现非活动窗口的按键模拟
+        keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY, 0);
+        QTimer::singleShot(100, [=]() {//延时可以确保 异步的keybd_event执行完毕
+            SendMessage(qq.winId(), WM_KEYDOWN, 'A', 0);
+            SendMessage(qq.winId(), WM_KEYUP, 'A', 0);
+            keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+        });
+        */
+    }
 }
 
 void Widget::paintEvent(QPaintEvent* event)

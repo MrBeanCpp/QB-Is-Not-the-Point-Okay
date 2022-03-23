@@ -10,6 +10,7 @@
 
 6.双击切换active/inActive 指自动hide & moveToSide能力
 
+7.滚轮切换聊天窗口(强制qq获取焦点)
 
 PS:
 1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）[新增"屏幕识图", "翻译"]
@@ -25,9 +26,13 @@ PS:
 5.SendMessage是阻塞函数 可能会挂起 建议改为PostMessage立即返回
 
 6.ShowWindowAsync异步 防止无响应挂起(组合操作不要异步 要等前一步完成)
+ fix: 改回同步函数 防止qq还未还原 就移动 导致窗口错位
 
 7.bug：与QQ Follower无关(quit)， 将QQ窗口左右晃动 导致Chrome 最小化后 再晃动恢复 导致Chrome获得TOPMOST，可能由于QQ有TOPMOST属性
 
 8.雷神加速器 会干扰GetKey & AttachThreadInput
 
 9.### GetWindowTextW GetProcessImageFileNameW GetClassNameW：TCHAR数组 用sizeof获取字符数 导致溢出，应用_countof
+
+10.休眠后QQ窗口会向左位移 不能用isQQHideState判断隐藏状态 改用!isQQAllVisible
+

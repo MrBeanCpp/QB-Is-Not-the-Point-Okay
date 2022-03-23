@@ -69,7 +69,7 @@ void Win::getInputFocus(HWND hwnd)
 {
     HWND foreHwnd = GetForegroundWindow();
     DWORD foreTID = GetWindowThreadProcessId(foreHwnd, NULL);
-    DWORD threadId = GetCurrentThreadId();
+    DWORD threadId = GetWindowThreadProcessId(hwnd, NULL); //GetCurrentThreadId(); //增加泛用性扩大到其他窗口
     if (foreHwnd == hwnd) {
         qDebug() << "#Already getFocus";
         return;
@@ -84,4 +84,19 @@ void Win::getInputFocus(HWND hwnd)
         SetFocus(hwnd);
         AttachThreadInput(threadId, foreTID, FALSE);
     }
+}
+
+void Win::simulateKeyEvent(const QList<BYTE>& keys) //注意顺序：如 Ctrl+Shift+A 要同按下顺序相同
+{
+    for (auto key : keys) //按下
+        keybd_event(key, 0, 0, 0);
+
+    std::for_each(keys.rbegin(), keys.rend(), [=](BYTE key) { //释逆序放
+        keybd_event(key, 0, KEYEVENTF_KEYUP, 0);
+    });
+}
+
+bool Win::isForeWindow(HWND hwnd)
+{
+    return GetForegroundWindow() == hwnd;
 }

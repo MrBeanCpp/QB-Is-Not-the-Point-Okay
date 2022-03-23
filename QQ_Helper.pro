@@ -39,6 +39,11 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 DISTFILES += \
     readme.txt
 
+#CONFIG (release, debug|release) { //release模式下禁用qDebug()会提升性能 刷新请采用[重新构建项目]
+#    message("release mode")
+#    DEFINES += QT_NO_DEBUG_OUTPUT
+#}
+
 RC_ICONS = images/icon.ico
 
 TARGET = "QQ Follower"
