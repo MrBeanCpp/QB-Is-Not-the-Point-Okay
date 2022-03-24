@@ -36,3 +36,5 @@ PS:
 
 10.休眠后QQ窗口会向左位移 不能用isQQHideState判断隐藏状态 改用!isQQAllVisible
 
+11.修改isQQSideState为范围，防止move失败导致的细微像素误差
+

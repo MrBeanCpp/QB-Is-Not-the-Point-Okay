@@ -34,8 +34,7 @@ Widget::Widget(QWidget* parent)
     timeLine = new QTimeLine(500, this);
     timeLine->setUpdateInterval(10);
     connect(timeLine, &QTimeLine::frameChanged, [=](int frame) {
-        QRect qqRect = qq.rect();
-        moveQQWindow(frame, qqRect.y(), qqRect.width(), qqRect.height(), true); //不repaint可能不刷新？(其实 repaint也不刷新 还得手动sendMessage)
+        moveQQWindow(frame); //不repaint可能不刷新？(其实 repaint也不刷新 还得手动sendMessage)
     });
     connect(timeLine, &QTimeLine::finished, [=]() { stateChanged(state, state); }); //为了防止isTimeLineRunning时，某些操作无法执行，结束后再发送一遍
 
@@ -71,11 +70,11 @@ Widget::Widget(QWidget* parent)
                 emit qqChatWinChanged(foreWin, qq.winId());
             setState(QQ);
 
-            if (!GetKey(VK_LBUTTON) && isAutoHide) { //松开鼠标（避免在拖动窗口）
+            if (!GetKey(VK_LBUTTON) && isAutoHide && !isTimeLineRunning()) { //松开鼠标（避免在拖动窗口）
                 QRect qqRect = qq.rect();
-                if (qqRect.x() > 0 && qqRect.x() <= 50) { //吸附效果
+                if (qqRect.x() && inRange(StickX.first, qqRect.x(), StickX.second)) { //吸附效果 & x!=0防止反复吸附0
                     moveQQWindow(0, qqRect.y(), qqRect.width(), qqRect.height());
-                } else if (!isTimeLineRunning() && qqRect.x() < 0 && qqRect.right() > 0) { //x not in [吸附范围] && x < 0 自动 move in
+                } else if (qqRect.x() < StickX.first && qqRect.right() > 0) { //x not in [吸附范围] && x < 0 自动 move in
                     Win::getInputFocus(winID()); //转移焦点 否则 isQQHideState()会moveOut();
                     moveIn();
                 }
@@ -194,6 +193,14 @@ void Widget::moveQQWindow(int X, int Y, int nWidth, int nHeight, WINBOOL bRepain
 {
     if (qq.isNull()) return;
 
+    static auto isNaN = [=](int num) { return num == NaN; };
+    if (isNaN(Y) || isNaN(nWidth) || isNaN(nHeight)) { //如果置空 则自动填充
+        QRect qqRect = qq.rect();
+        if (isNaN(Y)) Y = qqRect.y();
+        if (isNaN(nWidth)) nWidth = qqRect.width();
+        if (isNaN(nHeight)) nHeight = qqRect.height();
+    }
+
     qq.move(X, Y, nWidth, nHeight, bRepaint);
     move(X + nWidth - 1, Y + MarginTop); //-1是因为从0开始计数 修正与qqRect.right()的差异
 }
@@ -247,7 +254,7 @@ bool Widget::isQQHideState()
 bool Widget::isQQSideState()
 {
     QRect qqRect = qq.rect();
-    return qqRect.x() == 0;
+    return inRange(StickX.first, qqRect.x(), StickX.second); //范围
 }
 
 bool Widget::isQQAllVisible()
@@ -303,6 +310,11 @@ void Widget::setState(State _state)
 bool Widget::isState(State _state)
 {
     return this->state == _state;
+}
+
+bool Widget::inRange(int min, int val, int max)
+{
+    return val >= min && val <= max;
 }
 
 void Widget::enterEvent(QEvent* event) //指针应该很安全 不检查了
