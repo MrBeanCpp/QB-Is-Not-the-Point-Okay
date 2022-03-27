@@ -50,9 +50,9 @@ Widget::Widget(QWidget* parent)
         }
         //moveToQQSide();
         anima_trace->stop();
-        if ((getQQRightTop() - pos()).manhattanLength() > 2) { //距离过小 animate无法靠近
+        if ((getQQStickPos() - pos()).manhattanLength() > 2) { //距离过小 animate无法靠近
             anima_trace->setStartValue(this->pos());
-            anima_trace->setEndValue(getQQRightTop());
+            anima_trace->setEndValue(getQQStickPos());
             anima_trace->start();
         } else
             moveToQQSide();
@@ -187,7 +187,7 @@ bool Widget::isForeMyself()
     return Win::isForeWindow(winID());
 }
 
-QPoint Widget::getQQRightTop()
+QPoint Widget::getQQStickPos()
 {
     QRect qqRect = qq.rect();
     return QPoint(qqRect.right(), qqRect.top() + MarginTop);
@@ -211,7 +211,7 @@ void Widget::moveQQWindow(int X, int Y, int nWidth, int nHeight, WINBOOL bRepain
 
 void Widget::moveToQQSide()
 {
-    move(getQQRightTop());
+    move(getQQStickPos());
 }
 
 HWND Widget::winID()
@@ -293,11 +293,11 @@ void Widget::setBGColor(const QColor& color)
     setPalette(palette);
 }
 
-QRect Widget::getAbsorbRect()
+QRect Widget::getQQStickRect()
 {
-    QPoint RT = getQQRightTop();
-    QRect Rect(RT, RT);
-    return Rect.marginsAdded(QMargins(32, 30, 32, 50));
+    QRect qqRect = qq.rect();
+    QRect Rect(qqRect.topRight(), qqRect.topRight());
+    return Rect.marginsAdded(QMargins(32, 30, 32, qqRect.height()));
 }
 
 void Widget::setAutoHide(bool bAuto)
@@ -381,8 +381,8 @@ void Widget::mousePressEvent(QMouseEvent* event) //双击也会收到press
     if (isTimeLineRunning()) return;
 
     curPos = event->screenPos().toPoint();
-    mouseMoveLen = 0;
-    qqAbsorbRect = getAbsorbRect();
+    isStick = true;
+    qqStickRect = getQQStickRect();
     preColor = this->palette().color(QPalette::Window); //保存原色
 }
 
@@ -390,9 +390,10 @@ void Widget::mouseReleaseEvent(QMouseEvent* event)
 {
     Q_UNUSED(event)
 
-    if (getAbsorbRect().contains(pos())) //实时计算 增加可靠性
+    if (getQQStickRect().contains(pos())) { //实时计算 增加可靠性
+        MarginTop = pos().y() - qq.rect().top(); //更新MarginTop
         moveToQQSide();
-    else { //不在安全区域：quit
+    } else { //不在安全区域：quit
         sysTray->showMessage("Info", QString("About to [Quit] bye\nstate: %1 %2 %3").arg(qq.isMini()).arg(qq.rect().x()).arg(qq.rect().right()));
         qApp->quit();
     }
@@ -412,19 +413,26 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
     if (isTimeLineRunning()) return;
     if (!(event->buttons() & Qt::LeftButton)) return; //左键按下
 
-    static constexpr int MOVELIMIT = 250;
     QPoint mousePos = event->screenPos().toPoint();
-    mouseMoveLen += (mousePos - curPos).manhattanLength();
-    mouseMoveLen = qMin(mouseMoveLen, MOVELIMIT); //防止溢出
+    QPoint delta = mousePos - curPos;
 
-    if (mouseMoveLen >= MOVELIMIT) { //Hard to drag
-        QPoint newPos = this->pos() + mousePos - curPos;
-        curPos = mousePos;
-        move(newPos);
+    static constexpr qreal SpeedXLimit = 5000; //5000 px/s
+    static QTime lastTime = QTime::currentTime(); //press不需要初始化 因为时间长了没事
+    QTime now = QTime::currentTime();
+    int gap = lastTime.msecsTo(now);
+    qreal speedX = gap ? 1000.0 * delta.x() / gap : 0; //防止除数为 0
+    if (abs(speedX) > SpeedXLimit) isStick = false; //突破速度极限
+    lastTime = now;
 
-        setBGColor(qqAbsorbRect.contains(pos()) ? preColor : dangerColor);
-    } else
-        QCursor::setPos(curPos); //坚韧不拔
+    if (isStick) //Hard to drag(x方向)
+        delta.setX(0);
+    curPos += delta;
+    if (isStick)
+        QCursor::setPos(curPos); //坚韧不拔(x阻尼)
+
+    setBGColor(qqStickRect.contains(pos()) ? preColor : dangerColor);
+    QPoint newPos = this->pos() + delta;
+    move(newPos);
 }
 
 void Widget::wheelEvent(QWheelEvent* event) //从全局发送而来(Hook)

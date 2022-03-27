@@ -14,6 +14,9 @@
 增加qq左端区域对滚轮的响应（Hook）
 单个窗口会导致左端部分区域滚动时->Ctrl+Tab导致文本框TABTABTABTABTAB
 
+8.拖拽this quit
+改为 y方向随意移动 x方向达到一定速度才能突破吸附
+
 PS:
 1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）[新增"屏幕识图", "翻译"]
 
@@ -41,4 +44,6 @@ PS:
 11.修改isQQSideState为范围，防止move失败导致的细微像素误差
 
 12.Hook鼠标滚轮消息，postEvent发送给this，尽量减少回调函数阻塞， & 只在首次找到qq & moveOut时HOOK，moveIn时UNHOOK，节省资源
+
+13.滚轮事件加入限速器(50ms)防止高频模拟按键
 

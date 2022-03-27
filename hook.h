@@ -10,6 +10,7 @@ public:
     static void setMouseHook(void);
     static void unHook(void);
     static void setReceiver(QWidget* rec);
+    static bool isOn(void);
 
 private:
     static HHOOK h_mouse;

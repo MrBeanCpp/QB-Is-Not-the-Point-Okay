@@ -26,6 +26,11 @@ void Hook::setReceiver(QWidget* rec)
     receiver = rec;
 }
 
+bool Hook::isOn()
+{
+    return h_mouse != nullptr;
+}
+
 LRESULT Hook::mouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     if (nCode == HC_ACTION && wParam == WM_MOUSEWHEEL && receiver) {

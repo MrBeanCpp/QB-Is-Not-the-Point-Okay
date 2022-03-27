@@ -36,7 +36,7 @@ public:
     ~Widget();
 
     bool isForeMyself(void);
-    QPoint getQQRightTop(void);
+    QPoint getQQStickPos(void);
     void moveQQWindow(int X, int Y = NaN, int nWidth = NaN, int nHeight = NaN, WINBOOL bRepaint = true);
     void moveToQQSide(void);
     HWND winID(void);
@@ -50,7 +50,7 @@ public:
     bool isQQInvisible(void); //in the left
     void stopTraceAnima(void);
     void setBGColor(const QColor& color);
-    QRect getAbsorbRect(void); //获取QQ RightTop 周围可吸附区域
+    QRect getQQStickRect(void); //获取QQ RightTop 周围可吸附区域
     void setAutoHide(bool bAuto);
     void setState(State _state);
     bool isState(State _state);
@@ -72,8 +72,8 @@ private:
 
     //constexpr在编译期确定 而数据成员在运行期初始化 矛盾 所以只能是static
     static constexpr int Extend = 5; //Hide后 露出部分
-    static constexpr int MarginTop = 15;
     static constexpr int NaN = INT_MIN;
+    int MarginTop = 15;
 
     const QPair<int, int> StickX { -20, 50 }; //QQ窗口吸附范围(x - 屏幕边缘)
 
@@ -85,9 +85,9 @@ private:
 
     //mouseEvent 拖拽Folloer 部分
     QPoint curPos; //cursor pos
-    int mouseMoveLen = 0;
-    QRect qqAbsorbRect; //可吸附区域
+    QRect qqStickRect; //可吸附区域
     QColor preColor;
+    bool isStick = true;
 
     State state = MISS;
 
