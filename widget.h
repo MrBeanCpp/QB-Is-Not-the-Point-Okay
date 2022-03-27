@@ -3,6 +3,7 @@
 
 #include "QQChatWin.h"
 #include "WinUtility.h"
+#include "hook.h"
 #include "systemtray.h"
 #include <QPropertyAnimation>
 #include <QTime>

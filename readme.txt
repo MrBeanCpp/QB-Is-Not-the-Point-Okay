@@ -11,6 +11,8 @@
 6.双击切换active/inActive 指自动hide & moveToSide能力
 
 7.滚轮切换聊天窗口(强制qq获取焦点)
+增加qq左端区域对滚轮的响应（Hook）
+单个窗口会导致左端部分区域滚动时->Ctrl+Tab导致文本框TABTABTABTABTAB
 
 PS:
 1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）[新增"屏幕识图", "翻译"]
@@ -37,4 +39,6 @@ PS:
 10.休眠后QQ窗口会向左位移 不能用isQQHideState判断隐藏状态 改用!isQQAllVisible
 
 11.修改isQQSideState为范围，防止move失败导致的细微像素误差
+
+12.Hook鼠标滚轮消息，postEvent发送给this，尽量减少回调函数阻塞， & 只在首次找到qq & moveOut时HOOK，moveIn时UNHOOK，节省资源
 

@@ -1,5 +1,6 @@
 #ifndef WIN_H
 #define WIN_H
+#include <QPoint>
 #include <QString>
 #include <windows.h>
 class Win //Windows API

@@ -18,6 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     QQChatWin.cpp \
     WinUtility.cpp \
+    hook.cpp \
     main.cpp \
     systemtray.cpp \
     widget.cpp
@@ -25,6 +26,7 @@ SOURCES += \
 HEADERS += \
     QQChatWin.h \
     WinUtility.h \
+    hook.h \
     systemtray.h \
     widget.h
 
