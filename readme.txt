@@ -15,7 +15,8 @@
 单个窗口会导致左端部分区域滚动时->Ctrl+Tab导致文本框TABTABTABTABTAB
 
 8.拖拽this quit
-改为 y方向随意移动 x方向达到一定速度才能突破吸附
+改为 y方向随意移动 x方向(正方向)达到一定速度才能突破吸附
+y方向加上[上下]限制 setBGColor在isNotStick状态生效（否则容易误改颜色）
 
 PS:
 1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）[新增"屏幕识图", "翻译"]

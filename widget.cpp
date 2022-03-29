@@ -172,6 +172,10 @@ Widget::Widget(QWidget* parent)
             Hook::setMouseHook();
     });
 
+    connect(qApp, &QApplication::aboutToQuit, [=]() {
+        Hook::unHook();
+    });
+
     sysTray->showMessage("Info", "QB Started");
 
     Hook::setReceiver(this);
@@ -415,23 +419,30 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
 
     QPoint mousePos = event->screenPos().toPoint();
     QPoint delta = mousePos - curPos;
+    QPoint thisPos = this->pos();
 
-    static constexpr qreal SpeedXLimit = 5000; //5000 px/s
+    static constexpr qreal SpeedXLimit = 8000; //5000 px/s
     static QTime lastTime = QTime::currentTime(); //press不需要初始化 因为时间长了没事
     QTime now = QTime::currentTime();
     int gap = lastTime.msecsTo(now);
     qreal speedX = gap ? 1000.0 * delta.x() / gap : 0; //防止除数为 0
-    if (abs(speedX) > SpeedXLimit) isStick = false; //突破速度极限
+    if (speedX > SpeedXLimit) isStick = false; //突破速度极限
     lastTime = now;
 
-    if (isStick) //Hard to drag(x方向)
+    if (isStick) { //Hard to drag(x方向)
         delta.setX(0);
+        if (thisPos.y() <= qqStickRect.top()) //安全距离 防止蹭出去（边界Release）
+            delta.setY(2);
+        else if (thisPos.y() >= qqStickRect.bottom())
+            delta.setY(-2);
+    }
     curPos += delta;
     if (isStick)
         QCursor::setPos(curPos); //坚韧不拔(x阻尼)
+    else //isNotStick否则上下移动也会干扰setBGColor
+        setBGColor(qqStickRect.contains(thisPos) ? preColor : dangerColor);
 
-    setBGColor(qqStickRect.contains(pos()) ? preColor : dangerColor);
-    QPoint newPos = this->pos() + delta;
+    QPoint newPos = thisPos + delta;
     move(newPos);
 }
 
@@ -444,7 +455,7 @@ void Widget::wheelEvent(QWheelEvent* event) //从全局发送而来(Hook)
     bool isQQDownToMouse = WindowFromPoint({ pos.x(), pos.y() }) == qq.winId(); //防止中间人横插一脚（如图片查看器）
 
     if ((qqWheelRect.contains(pos) && isQQDownToMouse) || this->underMouse()) { //在this & qq特定区域内响应
-        static constexpr int Gap = 50;
+        static constexpr int Gap = 80;
         static QTime lastTime;
         QTime now = QTime::currentTime();
         if (lastTime.isValid() && lastTime.msecsTo(now) < Gap) return; //限速器，防止滚轮过快导致按键模拟不及时（触摸板）
