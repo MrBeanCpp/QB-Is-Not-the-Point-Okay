@@ -13,6 +13,7 @@
 7.滚轮切换聊天窗口(强制qq获取焦点)
 增加qq左端区域对滚轮的响应（Hook）
 单个窗口会导致左端部分区域滚动时->Ctrl+Tab导致文本框TABTABTABTABTAB
+改为回调函数过滤pos 并拦截消息 防止模拟按键时 Ctrl+滚轮导致缩放文本框
 
 8.拖拽this quit
 改为 y方向随意移动 x方向(正方向)达到一定速度才能突破吸附
@@ -45,6 +46,7 @@ PS:
 11.修改isQQSideState为范围，防止move失败导致的细微像素误差
 
 12.Hook鼠标滚轮消息，postEvent发送给this，尽量减少回调函数阻塞， & 只在首次找到qq & moveOut时HOOK，moveIn时UNHOOK，节省资源
+增加回调函数checker 过滤pos(将过滤工作前移至回调) 并拦截消息 防止模拟按键时 Ctrl+滚轮导致缩放文本框 对性能影响不大
 
 13.滚轮事件加入限速器(50ms)防止高频模拟按键
 

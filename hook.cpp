@@ -3,7 +3,7 @@
 #include <QWheelEvent>
 HHOOK Hook::h_mouse = nullptr;
 QWidget* Hook::receiver = nullptr;
-
+Hook::checkerFunc Hook::checker;
 void Hook::setMouseHook()
 {
     if (h_mouse == nullptr) {
@@ -31,15 +31,23 @@ bool Hook::isOn()
     return h_mouse != nullptr;
 }
 
+void Hook::setChecker(checkerFunc func)
+{
+    checker = func;
+}
+
 LRESULT Hook::mouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     if (nCode == HC_ACTION && wParam == WM_MOUSEWHEEL && receiver) {
         MSLLHOOKSTRUCT* data = (MSLLHOOKSTRUCT*)lParam;
-        short delta = (short)HIWORD(data->mouseData);
-        QPoint pos(data->pt.x, data->pt.y);
-        if (!receiver->geometry().contains(pos)) //自身窗体的事件不能重复发送
+        bool bBlock = false;
+        if (checker(data, &bBlock)) {
+            short delta = (short)HIWORD(data->mouseData);
+            QPoint pos(data->pt.x, data->pt.y);
             qApp->postEvent(receiver, new QWheelEvent(pos, delta, Qt::NoButton, Qt::NoModifier));
-        //return true;//阻断消息
+            if (bBlock)
+                return true; //阻断消息
+        }
     }
     return CallNextHookEx(h_mouse, nCode, wParam, lParam);
 }

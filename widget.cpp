@@ -179,6 +179,15 @@ Widget::Widget(QWidget* parent)
     sysTray->showMessage("Info", "QB Started");
 
     Hook::setReceiver(this);
+    Hook::setChecker([=](MSLLHOOKSTRUCT* data, bool* bBlock) -> bool {
+        *bBlock = true; //拦截消息 防止模拟按键时 Ctrl+滚轮导致缩放文本框
+        QPoint pos(data->pt.x, data->pt.y);
+        QRect qqRect = qq.rect();
+        static constexpr int WheelWidth = 66; //qq可响应wheel宽度(px)
+        QRect qqWheelRect(qqRect.topLeft(), QSize(WheelWidth, qqRect.height()));
+        bool isQQDownToMouse = WindowFromPoint(data->pt) == qq.winId(); //防止中间人横插一脚（如图片查看器）
+        return qqWheelRect.contains(pos) && isQQDownToMouse;
+    });
 }
 
 Widget::~Widget()
@@ -448,31 +457,24 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
 
 void Widget::wheelEvent(QWheelEvent* event) //从全局发送而来(Hook)
 {
-    QPoint pos = event->globalPos();
-    QRect qqRect = qq.rect();
-    static constexpr int WheelWidth = 66; //qq可响应wheel宽度(px)
-    QRect qqWheelRect(qqRect.topLeft(), QSize(WheelWidth, qqRect.height()));
-    bool isQQDownToMouse = WindowFromPoint({ pos.x(), pos.y() }) == qq.winId(); //防止中间人横插一脚（如图片查看器）
+    static constexpr int Gap = 80;
+    static QTime lastTime;
+    QTime now = QTime::currentTime();
+    if (lastTime.isValid() && lastTime.msecsTo(now) < Gap) return; //限速器，防止滚轮过快导致按键模拟不及时（触摸板）
+    lastTime = now;
+    qDebug() << "WheelEvent" << now;
 
-    if ((qqWheelRect.contains(pos) && isQQDownToMouse) || this->underMouse()) { //在this & qq特定区域内响应
-        static constexpr int Gap = 80;
-        static QTime lastTime;
-        QTime now = QTime::currentTime();
-        if (lastTime.isValid() && lastTime.msecsTo(now) < Gap) return; //限速器，防止滚轮过快导致按键模拟不及时（触摸板）
-        lastTime = now;
-        qDebug() << "WheelEvent" << now;
+    if (!Win::isForeWindow(qq.winId())) {
+        Win::getInputFocus(winID()); //自己获得焦点后才能设置其他窗口焦点
+        Win::getInputFocus(qq.winId());
+    }
 
-        if (!Win::isForeWindow(qq.winId())) {
-            Win::getInputFocus(winID()); //自己获得焦点后才能设置其他窗口焦点
-            Win::getInputFocus(qq.winId());
-        }
+    if (event->delta() > 0) { //模拟Ctrl+Shift+Tab向上切换QQ消息窗口 //Ctrl+↑↓会有系统提示音 很烦
+        Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_SHIFT, VK_TAB }));
+    } else { //模拟Ctrl+Tab向下切换QQ消息窗口
+        Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_TAB }));
 
-        if (event->delta() > 0) { //模拟Ctrl+Shift+Tab向上切换QQ消息窗口 //Ctrl+↑↓会有系统提示音 很烦
-            Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_SHIFT, VK_TAB }));
-        } else { //模拟Ctrl+Tab向下切换QQ消息窗口
-            Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_TAB }));
-
-            /*实现非活动窗口的按键模拟
+        /*实现非活动窗口的按键模拟
         keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY, 0);
         QTimer::singleShot(100, [=]() {//延时可以确保 异步的keybd_event执行完毕
             SendMessage(qq.winId(), WM_KEYDOWN, 'A', 0);
@@ -480,7 +482,6 @@ void Widget::wheelEvent(QWheelEvent* event) //从全局发送而来(Hook)
             keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
         });
         */
-        }
     }
 }
 
