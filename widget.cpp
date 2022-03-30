@@ -391,7 +391,8 @@ bool Widget::nativeEvent(const QByteArray& eventType, void* message, long* resul
 
 void Widget::mousePressEvent(QMouseEvent* event) //双击也会收到press
 {
-    if (isTimeLineRunning()) return;
+    if (isTimeLineRunning() || event->button() != Qt::LeftButton) return;
+    stopTraceAnima(); //防止move时 timer滞后检测到this 并moveToSide()导致鬼畜
 
     curPos = event->screenPos().toPoint();
     isStick = true;

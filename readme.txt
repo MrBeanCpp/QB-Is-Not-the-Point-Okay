@@ -50,3 +50,4 @@ PS:
 
 13.滚轮事件加入限速器(50ms)防止高频模拟按键
 
+14.MousePree时 stopTraceAnima(); //防止move时 timer滞后检测到this 并moveToSide()导致鬼畜
