@@ -51,3 +51,5 @@ PS:
 13.滚轮事件加入限速器(50ms)防止高频模拟按键
 
 14.MousePree时 stopTraceAnima(); //防止move时 timer滞后检测到this 并moveToSide()导致鬼畜
+
+15.wheelEvent中，改用QDateTime计时，防止QTime无法区分两天 导致msecTo < 0 触发限速器

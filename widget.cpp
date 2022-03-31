@@ -432,7 +432,7 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
     QPoint thisPos = this->pos();
 
     static constexpr qreal SpeedXLimit = 8000; //5000 px/s
-    static QTime lastTime = QTime::currentTime(); //press不需要初始化 因为时间长了没事
+    static QTime lastTime = QTime::currentTime(); //press不需要初始化 因为时间长了没事 & lastTime无论如何都可以更新 无需QDateTIme
     QTime now = QTime::currentTime();
     int gap = lastTime.msecsTo(now);
     qreal speedX = gap ? 1000.0 * delta.x() / gap : 0; //防止除数为 0
@@ -459,8 +459,8 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
 void Widget::wheelEvent(QWheelEvent* event) //从全局发送而来(Hook)
 {
     static constexpr int Gap = 80;
-    static QTime lastTime;
-    QTime now = QTime::currentTime();
+    static QDateTime lastTime; //QTime无法区分两天 导致差值 < 0
+    QDateTime now = QDateTime::currentDateTime();
     if (lastTime.isValid() && lastTime.msecsTo(now) < Gap) return; //限速器，防止滚轮过快导致按键模拟不及时（触摸板）
     lastTime = now;
     qDebug() << "WheelEvent" << now;
