@@ -98,6 +98,7 @@ Widget::Widget(QWidget* parent)
                         }
                     } else {
                         //qDebug() << "other";
+                        if (foreWin) lastOtherWin = foreWin; //有时候会是NULL
                         setState(OTHER);
                         if (isAutoHide && !isTimeLineRunning() && isQQSideState() && !qq.isUnderMouse() && !underMouse()) { //需要持续监测鼠标 所以不能放在stateChanged
                             //转移焦点 否则 当其他窗口关闭时 操作系统会默认将焦点转移至QQ导致isQQHideState()会moveOut();
@@ -369,6 +370,16 @@ void Widget::leaveEvent(QEvent* event)
             if (isQQSideState()) { //此时焦点在QQ or this上
                 Win::getInputFocus(winID()); //转移焦点 否则 isQQHideState()会moveOut();
                 moveIn();
+
+                static QMetaObject::Connection conn; //static自动捕获
+                conn = connect(timeLine, &QTimeLine::finished, [=] { //在动画结束后检测鼠标下的窗体 防止遮挡
+                    qDebug() << "MoveIn Finished & check for Focus Back";
+                    if (Win::topWinFromPoint(QCursor::pos()) == lastOtherWin) { //增加鼠标下窗体检测 防止出现令用户意外的焦点转移 //foreGroundWin一般是父窗口
+                        Win::getInputFocus(lastOtherWin); //返还焦点
+                        qDebug() << "#Focus back to:" << lastOtherWin << Win::getProcessName(lastOtherWin) << Win::getWindowClass(lastOtherWin);
+                    }
+                    disconnect(conn); //单次连接 过河拆桥
+                });
             } else
                 moveToSide();
         }
@@ -394,7 +405,7 @@ void Widget::mousePressEvent(QMouseEvent* event) //双击也会收到press
     if (isTimeLineRunning() || event->button() != Qt::LeftButton) return;
     stopTraceAnima(); //防止move时 timer滞后检测到this 并moveToSide()导致鬼畜
 
-    curPos = event->screenPos().toPoint();
+    curPos = event->globalPos();
     isStick = true;
     qqStickRect = getQQStickRect();
     preColor = this->palette().color(QPalette::Window); //保存原色
@@ -427,7 +438,7 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
     if (isTimeLineRunning()) return;
     if (!(event->buttons() & Qt::LeftButton)) return; //左键按下
 
-    QPoint mousePos = event->screenPos().toPoint();
+    QPoint mousePos = QCursor::pos(); //event->screenPos().toPoint()反映的是事件发生的状态 QCursor::pos()实时性更高
     QPoint delta = mousePos - curPos;
     QPoint thisPos = this->pos();
 

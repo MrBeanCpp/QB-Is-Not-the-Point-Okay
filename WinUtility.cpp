@@ -100,3 +100,23 @@ bool Win::isForeWindow(HWND hwnd)
 {
     return GetForegroundWindow() == hwnd;
 }
+
+QString Win::getWindowClass(HWND hwnd)
+{
+    static WCHAR buffer[128];
+    GetClassNameW(hwnd, buffer, _countof(buffer)); //sizeof字节数 会溢出
+    return QString::fromWCharArray(buffer);
+}
+
+HWND Win::windowFromPoint(const QPoint& pos)
+{
+    return WindowFromPoint({ pos.x(), pos.y() });
+}
+
+HWND Win::topWinFromPoint(const QPoint& pos)
+{
+    HWND hwnd = WindowFromPoint({ pos.x(), pos.y() });
+    while (GetParent(hwnd) != NULL)
+        hwnd = GetParent(hwnd);
+    return hwnd;
+}

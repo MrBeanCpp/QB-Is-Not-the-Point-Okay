@@ -90,6 +90,7 @@ private:
     bool isStick = true;
 
     State state = MISS;
+    HWND lastOtherWin = nullptr;
 
     // QWidget interface
 protected:

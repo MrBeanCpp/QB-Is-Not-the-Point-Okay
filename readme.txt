@@ -53,3 +53,10 @@ PS:
 14.MousePree时 stopTraceAnima(); //防止move时 timer滞后检测到this 并moveToSide()导致鬼畜
 
 15.wheelEvent中，改用QDateTime计时，防止QTime无法区分两天 导致msecTo < 0 触发限速器
+
+16.在手势左滑moveIN后，自动归还焦点至lastOtherWin，实现无感焦点切换（应该没人注意到 但体验提升巨大 特别是看视频）
+在moveIn动画结束后(connect & disconnect) 检测[鼠标下窗体]==lastOtherWin，增加可靠性，防止出现令用户以外的焦点转移（Zoom最小化恢复后不会获得焦点 backTo下层窗口）
+使用Alt+Tab切换时，lastOtherWin为系统窗口，exe为explorer
+检测使用的是topWindowFromPoint(因为GetForegroundWindow是父窗体)
+
+17.moveEvent改用QCursor::pos()实时性更高 断电后尤为明显：由于CPU频率降低 导致mousePos实时性降低 导致鼠标回弹

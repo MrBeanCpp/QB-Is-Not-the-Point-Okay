@@ -18,6 +18,9 @@ public:
     static void getInputFocus(HWND hwnd);
     static void simulateKeyEvent(const QList<BYTE>& keys);
     static bool isForeWindow(HWND hwnd);
+    static QString getWindowClass(HWND hwnd);
+    static HWND windowFromPoint(const QPoint& pos);
+    static HWND topWinFromPoint(const QPoint& pos);
 };
 
 #endif // WIN_H
