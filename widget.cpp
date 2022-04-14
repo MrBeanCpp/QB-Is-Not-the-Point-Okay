@@ -20,6 +20,7 @@ Widget::Widget(QWidget* parent)
     setWindowFlag(Qt::WindowStaysOnTopHint);
 
     setFocusPolicy(Qt::StrongFocus);
+    setAcceptDrops(true);
     //setMouseTracking(true);
     setWindowOpacity(0.9); //做一下方块动画------------------------
     //showMinimized(); //
@@ -445,7 +446,7 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
     static constexpr qreal SpeedXLimit = 8000; //5000 px/s
     static QTime lastTime = QTime::currentTime(); //press不需要初始化 因为时间长了没事 & lastTime无论如何都可以更新 无需QDateTIme
     QTime now = QTime::currentTime();
-    int gap = lastTime.msecsTo(now);
+    int gap = lastTime.msecsTo(now); //断电后 gap会突变卡顿
     qreal speedX = gap ? 1000.0 * delta.x() / gap : 0; //防止除数为 0
     if (speedX > SpeedXLimit) isStick = false; //突破速度极限
     lastTime = now;
@@ -512,4 +513,19 @@ void Widget::paintEvent(QPaintEvent* event)
     painter.drawLine(rect().topRight() + QPoint(-Margin_X, Margin_Y + 1), rect().bottomRight() + QPoint(-Margin_X, -Margin_Y));
 
     qDebug() << "paint";
+}
+
+void Widget::dragEnterEvent(QDragEnterEvent* event) //拖拽时发送EnterEvent事件弹出QQ
+{
+    qDebug() << "#dragEnter";
+    QPoint curPos = QCursor::pos();
+    qApp->postEvent(this, new QEnterEvent(event->pos(), curPos, curPos));
+    event->accept(); //接收了才能继续出发dragLeave
+}
+
+void Widget::dragLeaveEvent(QDragLeaveEvent* event)
+{
+    Q_UNUSED(event)
+    qDebug() << "#dragLeave";
+    setAttribute(Qt::WA_UnderMouse, false); //underMouse不会在dragDrop时更新，需要手动设置
 }

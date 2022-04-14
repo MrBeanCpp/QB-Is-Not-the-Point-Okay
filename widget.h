@@ -112,5 +112,10 @@ protected:
     // QWidget interface
 protected:
     void paintEvent(QPaintEvent* event) override;
+
+    // QWidget interface
+protected:
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragLeaveEvent(QDragLeaveEvent* event) override;
 };
 #endif // WIDGET_H

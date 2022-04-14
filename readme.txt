@@ -19,6 +19,8 @@
 改为 y方向随意移动 x方向(正方向)达到一定速度才能突破吸附
 y方向加上[上下]限制 setBGColor在isNotStick状态生效（否则容易误改颜色）
 
+9.新增拖拽文件至this时弹出QQ
+
 PS:
 1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）[新增"屏幕识图", "翻译"]
 
@@ -56,7 +58,11 @@ PS:
 
 16.在手势左滑moveIN后，自动归还焦点至lastOtherWin，实现无感焦点切换（应该没人注意到 但体验提升巨大 特别是看视频）
 在moveIn动画结束后(connect & disconnect) 检测[鼠标下窗体]==lastOtherWin，增加可靠性，防止出现令用户以外的焦点转移（Zoom最小化恢复后不会获得焦点 backTo下层窗口）
-使用Alt+Tab切换时，lastOtherWin为系统窗口，exe为explorer
+使用Alt+Tab切换时，lastOtherWin为系统窗口，exe为explorer(className == "MultitaskingViewFrame" "ForegroundStaging")
 检测使用的是topWindowFromPoint(因为GetForegroundWindow是父窗体)
 
+& BUG: getProcessName()对于任务管理器获取到的是上一个窗口exe，而非真实exe；对于"MultitaskingViewFrame"事后窗口销毁 ProcessName也会变为前台窗口exe 不准确
+
 17.moveEvent改用QCursor::pos()实时性更高 断电后尤为明显：由于CPU频率降低 导致mousePos实时性降低 导致鼠标回弹
+
+18.最小化Other窗口后，焦点回到下一个顶层窗口（BringToTopのme），但是貌似关闭Other窗口后，焦点直接回到上一个焦点窗口（QQ）
