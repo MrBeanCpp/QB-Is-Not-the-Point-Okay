@@ -20,6 +20,8 @@ public:
     void move(int x, int y, int width, int height, bool bRepaint = true); //效率更高
     bool isNull(void);
     void repaint(void);
+    void setAlwaysTop(bool bTop = true);
+    bool isTopMost(void);
 
 private:
     HWND qqHwnd = nullptr;

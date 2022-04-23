@@ -52,7 +52,7 @@ PS:
 
 13.滚轮事件加入限速器(50ms)防止高频模拟按键
 
-14.MousePree时 stopTraceAnima(); //防止move时 timer滞后检测到this 并moveToSide()导致鬼畜
+14.MousePress时 stopTraceAnima(); //防止move时 timer滞后检测到this 并moveToSide()导致鬼畜
 
 15.wheelEvent中，改用QDateTime计时，防止QTime无法区分两天 导致msecTo < 0 触发限速器
 
@@ -66,3 +66,5 @@ PS:
 17.moveEvent改用QCursor::pos()实时性更高 断电后尤为明显：由于CPU频率降低 导致mousePos实时性降低 导致鼠标回弹
 
 18.最小化Other窗口后，焦点回到下一个顶层窗口（BringToTopのme），但是貌似关闭Other窗口后，焦点直接回到上一个焦点窗口（QQ）
+
+19.isState(QQ)状态下：确保QQ窗口前置（出现过莫名其妙失去前置的bug）

@@ -71,6 +71,9 @@ Widget::Widget(QWidget* parent)
                 emit qqChatWinChanged(foreWin, qq.winId());
             setState(QQ);
 
+            if (!qq.isTopMost()) //确保QQ窗口前置（出现过莫名其妙失去前置的bug）
+                qq.setAlwaysTop();
+
             if (!GetKey(VK_LBUTTON) && isAutoHide && !isTimeLineRunning()) { //松开鼠标（避免在拖动窗口）
                 QRect qqRect = qq.rect();
                 if (qqRect.x() && inRange(StickX.first, qqRect.x(), StickX.second)) { //吸附效果 & x!=0防止反复吸附0
@@ -166,9 +169,10 @@ Widget::Widget(QWidget* parent)
     });
 
     connect(this, &Widget::qqChatWinChanged, [=](HWND curHwnd, HWND preHWND) {
-        Win::setAlwaysTop(preHWND, false); //取消前一个置顶
-        Win::setAlwaysTop(curHwnd);
+        //Win::setAlwaysTop(preHWND, false); //取消前一个置顶
+        qq.setAlwaysTop(false); //取消前一个置顶
         qq.setWindow(curHwnd);
+        qq.setAlwaysTop();
 
         if (preHWND == nullptr) //first found
             Hook::setMouseHook();

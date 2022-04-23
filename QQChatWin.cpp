@@ -80,3 +80,13 @@ void QQChatWin::repaint()
 { //SendMessage会阻塞
     PostMessageA(qqHwnd, WM_PAINT, 0, 0); //重绘(否则消息不能更新) (UpdateWindow无效)
 }
+
+void QQChatWin::setAlwaysTop(bool bTop)
+{
+    Win::setAlwaysTop(qqHwnd, bTop);
+}
+
+bool QQChatWin::isTopMost()
+{
+    return Win::isTopMost(qqHwnd);
+}
