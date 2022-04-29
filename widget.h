@@ -71,8 +71,9 @@ private:
     SystemTray* sysTray = nullptr;
 
     //constexpr在编译期确定 而数据成员在运行期初始化 矛盾 所以只能是static
-    static constexpr int Extend = 5; //Hide后 露出部分
     static constexpr int NaN = INT_MIN;
+    static constexpr int defaultExtend = 5;
+    int Extend = defaultExtend; //Hide后 露出部分
     int MarginTop = 15;
 
     const QPair<int, int> StickX { -20, 50 }; //QQ窗口吸附范围(x - 屏幕边缘)

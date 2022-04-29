@@ -3,6 +3,7 @@
 #include <QPoint>
 #include <QString>
 #include <windows.h>
+#include <QRect>
 class Win //Windows API
 {
 public:
@@ -21,6 +22,8 @@ public:
     static QString getWindowClass(HWND hwnd);
     static HWND windowFromPoint(const QPoint& pos);
     static HWND topWinFromPoint(const QPoint& pos);
+    static QRect getClipCursor(void);
+    static bool isCursorVisible(void);
 };
 
 #endif // WIN_H

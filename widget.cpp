@@ -59,6 +59,33 @@ Widget::Widget(QWidget* parent)
             moveToQQSide();
     });
 
+    QTimer* timer_cursor = new QTimer(this);
+    timer_cursor->callOnTimeout([=]() {
+        static bool isEntireHide = false;
+        bool isGaming = !Win::isCursorVisible() && Win::getClipCursor().width() == 0; //游戏全屏会限制鼠标区域并hideCursor
+        if (isGaming ^ isEntireHide) { //逻辑异或（isGameing != isEntireHide）
+            this->Extend = isGaming ? 0 : defaultExtend;
+            isEntireHide = isGaming;
+            moveIn();
+            qDebug() << "#GameModeChange";
+        }
+        /*冗长写法
+        if (isGaming) {
+            if (!isEntireHide) {
+                isEntireHide = true;
+                Extend = 0;
+                moveIn();
+            }
+        } else {
+            if (isEntireHide) {
+                isEntireHide = false;
+                Extend = defaultExtend;
+                moveIn();
+            }
+        }*/
+    });
+    timer_cursor->start(1000);
+
     QTimer* timer_find = new QTimer(this);
     timer_find->callOnTimeout([=]() {
         HWND foreWin = GetForegroundWindow();

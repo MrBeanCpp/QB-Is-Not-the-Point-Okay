@@ -120,3 +120,18 @@ HWND Win::topWinFromPoint(const QPoint& pos)
         hwnd = GetParent(hwnd);
     return hwnd;
 }
+
+QRect Win::getClipCursor()
+{
+    RECT rect;
+    GetClipCursor(&rect);
+    return QRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+}
+
+bool Win::isCursorVisible()
+{
+    CURSORINFO info;
+    info.cbSize = sizeof(CURSORINFO);
+    GetCursorInfo(&info);
+    return info.flags == CURSOR_SHOWING;
+}

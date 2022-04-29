@@ -21,6 +21,8 @@ y方向加上[上下]限制 setBGColor在isNotStick状态生效（否则容易�
 
 9.新增拖拽文件至this时弹出QQ
 
+10.游戏状态下自动隐藏
+
 PS:
 1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）[新增"屏幕识图", "翻译"]
 
@@ -68,3 +70,5 @@ PS:
 18.最小化Other窗口后，焦点回到下一个顶层窗口（BringToTopのme），但是貌似关闭Other窗口后，焦点直接回到上一个焦点窗口（QQ）
 
 19.isState(QQ)状态下：确保QQ窗口前置（出现过莫名其妙失去前置的bug）
+
+20.通过检测ClipCursorRect判定游戏状态(锁定指针的FPS游戏)，并隐藏自身(Extend = 0)，防止碍眼
