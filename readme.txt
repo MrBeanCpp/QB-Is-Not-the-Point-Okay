@@ -72,3 +72,5 @@ PS:
 19.isState(QQ)状态下：确保QQ窗口前置（出现过莫名其妙失去前置的bug）
 
 20.通过检测ClipCursorRect判定游戏状态(锁定指针的FPS游戏)，并隐藏自身(Extend = 0)，防止碍眼
+
+21.增加手动EntireHide开关（托盘）弥补了非射击游戏不能自动EntireHide的痛（手动hide后关闭自动检测）

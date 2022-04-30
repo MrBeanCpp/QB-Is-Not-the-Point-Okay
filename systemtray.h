@@ -14,6 +14,9 @@ public:
 
 private:
     void setMenu(QWidget* parent = nullptr);
+
+signals:
+    void askForEntireHide(bool bEntire);
 };
 
 #endif // SYSTEMTRAY_H

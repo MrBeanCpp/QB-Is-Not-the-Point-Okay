@@ -55,6 +55,7 @@ public:
     void setState(State _state);
     bool isState(State _state);
     bool inRange(int min, int val, int max);
+    void setEntireHide(bool bEntire); //Extend = 0
 
 signals:
     void stateChanged(State curState, State preState);

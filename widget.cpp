@@ -64,10 +64,8 @@ Widget::Widget(QWidget* parent)
         static bool isEntireHide = false;
         bool isGaming = !Win::isCursorVisible() && Win::getClipCursor().width() == 0; //游戏全屏会限制鼠标区域并hideCursor
         if (isGaming ^ isEntireHide) { //逻辑异或（isGameing != isEntireHide）
-            this->Extend = isGaming ? 0 : defaultExtend;
             isEntireHide = isGaming;
-            moveIn();
-            qDebug() << "#GameModeChange";
+            setEntireHide(isEntireHide);
         }
         /*冗长写法
         if (isGaming) {
@@ -84,7 +82,13 @@ Widget::Widget(QWidget* parent)
             }
         }*/
     });
-    timer_cursor->start(1000);
+    timer_cursor->setInterval(1000);
+    timer_cursor->start();
+
+    connect(sysTray, &SystemTray::askForEntireHide, [=](bool bEntire) {
+        setEntireHide(bEntire);
+        bEntire ? timer_cursor->stop() : timer_cursor->start(); //手动设置EntireHide后 无需开启指针锁定检测
+    });
 
     QTimer* timer_find = new QTimer(this);
     timer_find->callOnTimeout([=]() {
@@ -369,6 +373,14 @@ bool Widget::isState(State _state)
 bool Widget::inRange(int min, int val, int max)
 {
     return val >= min && val <= max;
+}
+
+void Widget::setEntireHide(bool bEntire) //Extend = 0完全hide 防止Game碍眼 & 误触
+{
+    qDebug() << "#EntireHide:" << bEntire;
+    this->Extend = bEntire ? 0 : defaultExtend;
+    if (isQQInvisible())
+        moveIn(); //直接调整
 }
 
 void Widget::enterEvent(QEvent* event) //指针应该很安全 不检查了
