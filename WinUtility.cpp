@@ -3,6 +3,8 @@
 #include <QMessageBox>
 #include <cstring>
 #include <psapi.h>
+#include <QScreen>
+#include <QApplication>
 void Win::setAlwaysTop(HWND hwnd, bool isTop)
 {
     SetWindowPos(hwnd, isTop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW); //持续置顶
@@ -134,4 +136,25 @@ bool Win::isCursorVisible()
     info.cbSize = sizeof(CURSORINFO);
     GetCursorInfo(&info);
     return info.flags == CURSOR_SHOWING;
+}
+
+bool Win::isUnderCursor(HWND Hwnd)
+{
+    HWND hwnd = topWinFromPoint(QCursor::pos());
+    return hwnd == Hwnd;
+}
+
+bool Win::isForeFullScreen()
+{
+    QRect Screen = qApp->primaryScreen()->geometry();
+    HWND Hwnd = GetForegroundWindow();
+
+    HWND H_leftBottom = topWinFromPoint(Screen.bottomLeft()); //获取左下角像素所属窗口，非全屏是任务栏
+    if (Hwnd != H_leftBottom) return false;
+
+    RECT Rect;
+    GetWindowRect(Hwnd, &Rect);
+    if (Rect.right - Rect.left >= Screen.width() && Rect.bottom - Rect.top >= Screen.height()) //确保窗口大小(二重验证)
+        return true;
+    return false;
 }

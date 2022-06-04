@@ -40,8 +40,8 @@ public:
     void moveQQWindow(int X, int Y = NaN, int nWidth = NaN, int nHeight = NaN, WINBOOL bRepaint = true);
     void moveToQQSide(void);
     HWND winID(void);
-    void moveIn(void);
-    void moveOut(void);
+    void moveIn(int duration = 500);
+    void moveOut(int duration = 500);
     void moveToSide(void); //==moveOut
     bool isTimeLineRunning(void);
     bool isQQHideState(void);
@@ -60,6 +60,7 @@ public:
 signals:
     void stateChanged(State curState, State preState);
     void qqChatWinChanged(HWND curHwnd, HWND preHwnd);
+    void moveInFinished(void);
 
 private:
     Ui::Widget* ui;

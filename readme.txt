@@ -74,3 +74,10 @@ PS:
 20.通过检测ClipCursorRect判定游戏状态(锁定指针的FPS游戏)，并隐藏自身(Extend = 0)，防止碍眼
 
 21.增加手动EntireHide开关（托盘）弥补了非射击游戏不能自动EntireHide的痛（手动hide后关闭自动检测）
+
+22.##手势左滑恢复焦点后 有些窗口可能出现奇怪Size变化（如微软自带软件 & VS & VSCode 原因未知
+
+23.由于部分游戏并不会锁定指针，所以改变隐藏策略为：hideCursor & FullScreen
+    也便于在全屏看视频时，隐藏 以达到沉浸效果，移动鼠标即可恢复
+    由于窗体move而鼠标静止时，不会触发EnterEvent，故在moveInFinished时手动检测鼠标位置，模拟Event（主要用于鼠标快速移动到x=0而窗体缓缓移出时）
+    为moveIn() moveOut()增加 int duration参数

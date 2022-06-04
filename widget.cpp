@@ -37,7 +37,18 @@ Widget::Widget(QWidget* parent)
     connect(timeLine, &QTimeLine::frameChanged, [=](int frame) {
         moveQQWindow(frame); //不repaint可能不刷新？(其实 repaint也不刷新 还得手动sendMessage)
     });
-    connect(timeLine, &QTimeLine::finished, [=]() { stateChanged(state, state); }); //为了防止isTimeLineRunning时，某些操作无法执行，结束后再发送一遍
+    connect(timeLine, &QTimeLine::finished, [=]() {
+        stateChanged(state, state); //为了防止isTimeLineRunning时，某些操作无法执行，结束后再发送一遍
+
+        if (isQQInvisible())
+            emit moveInFinished();
+    });
+    connect(this, &Widget::moveInFinished, [=]() {
+        if (Win::isUnderCursor(winID())) { //当窗体move而鼠标静止时 不会触发EnterEvent 需要手动检测；主要用于setEntireHide(false)后无法触发moveOut
+            QPoint curPos = QCursor::pos();
+            qApp->postEvent(this, new QEnterEvent(mapFromGlobal(curPos), curPos, curPos));
+        }
+    });
 
     anima_trace = new QPropertyAnimation(this, "pos");
     anima_trace->setDuration(100);
@@ -62,9 +73,10 @@ Widget::Widget(QWidget* parent)
     QTimer* timer_cursor = new QTimer(this);
     timer_cursor->callOnTimeout([=]() {
         static bool isEntireHide = false;
-        bool isGaming = !Win::isCursorVisible() && Win::getClipCursor().width() == 0; //游戏全屏会限制鼠标区域并hideCursor
-        if (isGaming ^ isEntireHide) { //逻辑异或（isGameing != isEntireHide）
-            isEntireHide = isGaming;
+        //bool isGaming = !Win::isCursorVisible() && Win::getClipCursor().width() == 0; //游戏全屏会限制鼠标区域并hideCursor
+        bool isBusy = !Win::isCursorVisible() && Win::isForeFullScreen(); //因为游戏不一定限制鼠标区域，& 全屏看视频也需要hide
+        if (isBusy ^ isEntireHide) { //逻辑异或（isGameing != isEntireHide）
+            isEntireHide = isBusy;
             setEntireHide(isEntireHide);
         }
         /*冗长写法
@@ -269,25 +281,27 @@ HWND Widget::winID()
     return (HWND)this->winId();
 }
 
-void Widget::moveIn()
+void Widget::moveIn(int duration)
 {
     stopTraceAnima();
     QRect qqRect = qq.rect();
     timeLine->stop();
     timeLine->setFrameRange(qqRect.x(), -(qqRect.width() + width() - Extend));
     if (timeLine->startFrame() == timeLine->endFrame()) return;
+    timeLine->setDuration(duration);
     timeLine->start();
 
     Hook::unHook();
 }
 
-void Widget::moveOut()
+void Widget::moveOut(int duration)
 {
     stopTraceAnima();
     QRect qqRect = qq.rect();
     timeLine->stop();
     timeLine->setFrameRange(qqRect.x(), 0);
     if (timeLine->startFrame() == timeLine->endFrame()) return;
+    timeLine->setDuration(duration);
     timeLine->start();
 
     Hook::setMouseHook();
@@ -380,7 +394,7 @@ void Widget::setEntireHide(bool bEntire) //Extend = 0完全hide 防止Game碍眼
     qDebug() << "#EntireHide:" << bEntire;
     this->Extend = bEntire ? 0 : defaultExtend;
     if (isQQInvisible())
-        moveIn(); //直接调整
+        moveIn(100); //直接调整
 }
 
 void Widget::enterEvent(QEvent* event) //指针应该很安全 不检查了
@@ -563,7 +577,7 @@ void Widget::dragEnterEvent(QDragEnterEvent* event) //拖拽时发送EnterEvent�
     qDebug() << "#dragEnter";
     QPoint curPos = QCursor::pos();
     qApp->postEvent(this, new QEnterEvent(event->pos(), curPos, curPos));
-    event->accept(); //接收了才能继续出发dragLeave
+    event->accept(); //接收了才能继续发出dragLeave
 }
 
 void Widget::dragLeaveEvent(QDragLeaveEvent* event)

@@ -24,6 +24,8 @@ public:
     static HWND topWinFromPoint(const QPoint& pos);
     static QRect getClipCursor(void);
     static bool isCursorVisible(void);
+    static bool isUnderCursor(HWND Hwnd);
+    static bool isForeFullScreen(void);
 };
 
 #endif // WIN_H
