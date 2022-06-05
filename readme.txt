@@ -75,7 +75,10 @@ PS:
 
 21.增加手动EntireHide开关（托盘）弥补了非射击游戏不能自动EntireHide的痛（手动hide后关闭自动检测）
 
-22.##手势左滑恢复焦点后 有些窗口可能出现奇怪Size变化（如微软自带软件 & VS & VSCode 原因未知
+22.##手势左滑恢复焦点后 有些窗口可能出现奇怪Size变化（如微软自带软件 & VS & VSCode 原因未知 （诶为啥现在 VS VScode又ok了
+    这是由于 Attach failed之后的miniAndShow(hwnd);
+    因为某些系统窗口无法attach & 在雷神加速器启动时 无法attach 故因在恢复焦点时取消二次尝试(miniAndShow(hwnd);)影响体验
+    #直接改为SwitchToThisWindow(lastOtherWin, true); //此时this已获得焦点 所以可以使用该函数；且不会因为系统窗口而Attach失败
 
 23.由于部分游戏并不会锁定指针，所以改变隐藏策略为：hideCursor & FullScreen
     也便于在全屏看视频时，隐藏 以达到沉浸效果，移动鼠标即可恢复

@@ -433,7 +433,8 @@ void Widget::leaveEvent(QEvent* event)
                 conn = connect(timeLine, &QTimeLine::finished, [=] { //在动画结束后检测鼠标下的窗体 防止遮挡
                     qDebug() << "MoveIn Finished & check for Focus Back";
                     if (Win::topWinFromPoint(QCursor::pos()) == lastOtherWin) { //增加鼠标下窗体检测 防止出现令用户意外的焦点转移 //foreGroundWin一般是父窗口
-                        Win::getInputFocus(lastOtherWin); //返还焦点
+                        //Win::getInputFocus(lastOtherWin); //返还焦点 attach失败时会miniAndShow 观感不好
+                        SwitchToThisWindow(lastOtherWin, true); //此时this已获得焦点 所以可以使用该函数；且不会因为系统窗口而Attach失败
                         qDebug() << "#Focus back to:" << lastOtherWin << Win::getProcessName(lastOtherWin) << Win::getWindowClass(lastOtherWin);
                     }
                     disconnect(conn); //单次连接 过河拆桥
