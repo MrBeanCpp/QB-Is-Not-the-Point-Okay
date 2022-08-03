@@ -51,3 +51,6 @@ RC_ICONS = images/icon.ico
 TARGET = "QQ Follower"
 
 LIBS += -lpsapi
+
+RESOURCES += \
+   res.qrc

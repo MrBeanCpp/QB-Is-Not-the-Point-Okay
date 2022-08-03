@@ -3,7 +3,7 @@
 SystemTray::SystemTray(QWidget* parent)
     : QSystemTrayIcon(parent)
 {
-    setIcon(QIcon(R"(E:\Qt5.14.2\Projects\QQ_Helper\images\icon.ico)"));
+    setIcon(QIcon(":/images/icon.ico"));
     setMenu(parent);
     setToolTip("QQ Follower");
 }

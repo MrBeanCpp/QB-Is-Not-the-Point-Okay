@@ -9,8 +9,7 @@
 #define GetKey(X) (GetAsyncKeyState(X) & 0x8000)
 
 Widget::Widget(QWidget* parent)
-    : QWidget(parent)
-    , ui(new Ui::Widget)
+    : QWidget(parent), ui(new Ui::Widget)
 {
     ui->setupUi(this);
 
@@ -34,10 +33,10 @@ Widget::Widget(QWidget* parent)
 
     timeLine = new QTimeLine(500, this);
     timeLine->setUpdateInterval(10);
-    connect(timeLine, &QTimeLine::frameChanged, [=](int frame) {
+    connect(timeLine, &QTimeLine::frameChanged, this, [=](int frame) {
         moveQQWindow(frame); //不repaint可能不刷新？(其实 repaint也不刷新 还得手动sendMessage)
     });
-    connect(timeLine, &QTimeLine::finished, [=]() {
+    connect(timeLine, &QTimeLine::finished, this, [=]() {
         stateChanged(state, state); //为了防止isTimeLineRunning时，某些操作无法执行，结束后再发送一遍
 
         if (isQQInvisible())
@@ -106,7 +105,7 @@ Widget::Widget(QWidget* parent)
     timer_find->callOnTimeout([=]() {
         HWND foreWin = GetForegroundWindow();
         QString title = Win::getWindowText(foreWin);
-        static const QStringList BlackList = { "图片查看", "屏幕识图", "翻译" }; //类与样式难以同Chat区分↓
+        static const QStringList BlackList = {"图片查看", "屏幕识图", "翻译"}; //类与样式难以同Chat区分↓
 
         if (QQChatWin::isChatWin(foreWin) && !BlackList.contains(title)) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
             //qDebug() << "Find QQ" << title;
@@ -430,7 +429,7 @@ void Widget::leaveEvent(QEvent* event)
                 moveIn();
 
                 static QMetaObject::Connection conn; //static自动捕获
-                conn = connect(timeLine, &QTimeLine::finished, [=] { //在动画结束后检测鼠标下的窗体 防止遮挡
+                conn = connect(timeLine, &QTimeLine::finished, this, [=] { //在动画结束后检测鼠标下的窗体 防止遮挡
                     qDebug() << "MoveIn Finished & check for Focus Back";
                     if (Win::topWinFromPoint(QCursor::pos()) == lastOtherWin) { //增加鼠标下窗体检测 防止出现令用户意外的焦点转移 //foreGroundWin一般是父窗口
                         //Win::getInputFocus(lastOtherWin); //返还焦点 attach失败时会miniAndShow 观感不好
@@ -540,10 +539,10 @@ void Widget::wheelEvent(QWheelEvent* event) //从全局发送而来(Hook)
         Win::getInputFocus(qq.winId());
     }
 
-    if (event->delta() > 0) { //模拟Ctrl+Shift+Tab向上切换QQ消息窗口 //Ctrl+↑↓会有系统提示音 很烦
-        Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_SHIFT, VK_TAB }));
+    if (event->angleDelta().y() > 0) { //模拟Ctrl+Shift+Tab向上切换QQ消息窗口 //Ctrl+↑↓会有系统提示音 很烦
+        Win::simulateKeyEvent(KeyList({VK_CONTROL, VK_SHIFT, VK_TAB}));
     } else { //模拟Ctrl+Tab向下切换QQ消息窗口
-        Win::simulateKeyEvent(KeyList({ VK_CONTROL, VK_TAB }));
+        Win::simulateKeyEvent(KeyList({VK_CONTROL, VK_TAB}));
 
         /*实现非活动窗口的按键模拟
         keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY, 0);
