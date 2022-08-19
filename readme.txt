@@ -23,6 +23,8 @@ y方向加上[上下]限制 setBGColor在isNotStick状态生效（否则容易�
 
 10.游戏状态下自动隐藏
 
+11.消息coming时，左侧弹出好友头像 as Tip
+
 PS:
 1.图片查看器类名 & 样式与QQChat无异 只能通过title区分过滤 并归为QQSubwin & 置顶it（如果好友叫"图片查看"就寄了）[新增"屏幕识图", "翻译"]
 
@@ -84,3 +86,7 @@ PS:
     也便于在全屏看视频时，隐藏 以达到沉浸效果，移动鼠标即可恢复
     由于窗体move而鼠标静止时，不会触发EnterEvent，故在moveInFinished时手动检测鼠标位置，模拟Event（主要用于鼠标快速移动到x=0而窗体缓缓移出时）
     为moveIn() moveOut()增加 int duration参数
+
+24.改造QQChatWin为单例模式
+    新增IconTip窗口：检测QQ flash并在左侧弹出窗口图标（发来消息的好友头像），位于主窗口下方
+    主要用在全屏模式下 便于获取好有身份及在静音模式下 不错过消息

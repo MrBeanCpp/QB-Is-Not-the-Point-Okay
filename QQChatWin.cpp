@@ -1,7 +1,15 @@
 #include "QQChatWin.h"
-
-QQChatWin::QQChatWin()
+#include <QDebug>
+QQChatWin::QQChatWin(QObject* parent)
+    : QObject(parent)
 {
+    qDebug() << "QQChatWin: Only one instance, once Init";
+}
+
+QQChatWin& QQChatWin::instance()
+{
+    static QQChatWin ins; //local static
+    return ins;
 }
 
 bool QQChatWin::isChatWin(HWND hwnd) //可能会误判 //图片查看器 翻译 屏幕识图 类与样式难以同Chat区分↓

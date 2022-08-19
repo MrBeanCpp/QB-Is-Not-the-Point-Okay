@@ -31,6 +31,8 @@ Widget::Widget(QWidget* parent)
     sysTray = new SystemTray(this);
     sysTray->show();
 
+    iconTip = new IconTip(this);
+
     timeLine = new QTimeLine(500, this);
     timeLine->setUpdateInterval(10);
     connect(timeLine, &QTimeLine::frameChanged, this, [=](int frame) {
@@ -273,6 +275,7 @@ void Widget::moveQQWindow(int X, int Y, int nWidth, int nHeight, WINBOOL bRepain
 void Widget::moveToQQSide()
 {
     move(getQQStickPos());
+    iconTip->setHeight(this->geometry().bottom());
 }
 
 HWND Widget::winID()
@@ -303,6 +306,7 @@ void Widget::moveOut(int duration)
     timeLine->setDuration(duration);
     timeLine->start();
 
+    iconTip->hide();
     Hook::setMouseHook();
 }
 
@@ -448,6 +452,7 @@ bool Widget::nativeEvent(const QByteArray& eventType, void* message, long* resul
 {
     Q_UNUSED(eventType);
     Q_UNUSED(result);
+
     MSG* msg = (MSG*)message;
     static const UINT WM_TASKBARCREATED = RegisterWindowMessageW(L"TaskbarCreated");
     if (msg->message == WM_TASKBARCREATED) { //获取任务栏重启信息，再次隐藏任务栏图标

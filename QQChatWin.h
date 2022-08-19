@@ -4,10 +4,16 @@
 #include <QCursor>
 #include <QRect>
 #include <windows.h>
+#include <QObject>
 
-class QQChatWin {
+class QQChatWin: public QObject {
+    Q_OBJECT
+private:
+    QQChatWin(QObject* parent = nullptr);
+    QQChatWin(const QQChatWin&) = delete;
+    QQChatWin& operator=(const QQChatWin&) = delete;
 public:
-    QQChatWin();
+    static QQChatWin& instance(void); //单例模式
     static bool isChatWin(HWND hwnd);
     void setWindow(HWND hwnd);
     HWND winId(void);

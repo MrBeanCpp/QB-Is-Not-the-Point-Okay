@@ -19,6 +19,7 @@ SOURCES += \
     QQChatWin.cpp \
     WinUtility.cpp \
     hook.cpp \
+    icontip.cpp \
     main.cpp \
     systemtray.cpp \
     widget.cpp
@@ -27,10 +28,12 @@ HEADERS += \
     QQChatWin.h \
     WinUtility.h \
     hook.h \
+    icontip.h \
     systemtray.h \
     widget.h
 
 FORMS += \
+    icontip.ui \
     widget.ui
 
 # Default rules for deployment.

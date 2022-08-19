@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QWidget>
 #include <windows.h>
+#include "icontip.h"
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
 QT_END_NAMESPACE
@@ -58,19 +59,20 @@ public:
     void setEntireHide(bool bEntire); //Extend = 0
 
 signals:
-    void stateChanged(State curState, State preState);
+    void stateChanged(Widget::State curState, Widget::State preState);
     void qqChatWinChanged(HWND curHwnd, HWND preHwnd);
     void moveInFinished(void);
 
 private:
     Ui::Widget* ui;
 
-    QQChatWin qq;
+    QQChatWin& qq = QQChatWin::instance();
 
     QTimeLine* timeLine = nullptr;
     QPropertyAnimation* anima_trace = nullptr;
     QTimer* timer_trace = nullptr;
     SystemTray* sysTray = nullptr;
+    IconTip* iconTip = nullptr;
 
     //constexpr在编译期确定 而数据成员在运行期初始化 矛盾 所以只能是static
     static constexpr int NaN = INT_MIN;
