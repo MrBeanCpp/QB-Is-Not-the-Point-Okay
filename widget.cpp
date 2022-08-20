@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QtWin>
 #include <cmath>
+#include <QRegExp>
 #define GetKey(X) (GetAsyncKeyState(X) & 0x8000)
 
 Widget::Widget(QWidget* parent)
@@ -98,7 +99,7 @@ Widget::Widget(QWidget* parent)
     timer_cursor->setInterval(1000);
     timer_cursor->start();
 
-    connect(sysTray, &SystemTray::askForEntireHide, [=](bool bEntire) {
+    connect(sysTray, &SystemTray::askForEntireHide, this, [=](bool bEntire) {
         setEntireHide(bEntire);
         bEntire ? timer_cursor->stop() : timer_cursor->start(); //手动设置EntireHide后 无需开启指针锁定检测
     });
@@ -107,9 +108,10 @@ Widget::Widget(QWidget* parent)
     timer_find->callOnTimeout([=]() {
         HWND foreWin = GetForegroundWindow();
         QString title = Win::getWindowText(foreWin);
-        static const QStringList BlackList = {"图片查看", "屏幕识图", "翻译"}; //类与样式难以同Chat区分↓
+        //static const QStringList BlackList = {"图片查看", "屏幕识图", "翻译", "", "屏幕录制预览"}; //类与样式难以同Chat区分↓
+        static const QRegExp BlackList {"(图片查看)|(屏幕识图)|(翻译)|()|(屏幕录制预览)|(正在和.+视频通话)"};
 
-        if (QQChatWin::isChatWin(foreWin) && !BlackList.contains(title)) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
+        if (QQChatWin::isChatWin(foreWin) && !BlackList.exactMatch(title)) { //规避图片查看器 难以区分 （如果好友叫"图片查看"就寄了）
             //qDebug() << "Find QQ" << title;
             if (qq.winId() != foreWin) //new Found
                 emit qqChatWinChanged(foreWin, qq.winId());
@@ -140,7 +142,7 @@ Widget::Widget(QWidget* parent)
                     } else if (qq.isInSameThread(foreWin)) { //排除相同线程窗口情况(表情窗口)
                         //qDebug() << "QQ subWin";
                         setState(QQsub);
-                        if (BlackList.contains(title) && !Win::isTopMost(foreWin)) { //防止重复置顶 导致右键菜单无法弹出
+                        if (BlackList.exactMatch(title) && !Win::isTopMost(foreWin)) { //防止重复置顶 导致右键菜单无法弹出
                             Win::setAlwaysTop(foreWin); //需要置顶 否则被遮挡
                             qDebug() << "setTop:" << foreWin << title;
                         }
@@ -213,6 +215,7 @@ Widget::Widget(QWidget* parent)
     });
 
     connect(this, &Widget::qqChatWinChanged, [=](HWND curHwnd, HWND preHWND) {
+        qDebug() << "#qqChatWin Title: " << Win::getWindowText(curHwnd);
         //Win::setAlwaysTop(preHWND, false); //取消前一个置顶
         qq.setAlwaysTop(false); //取消前一个置顶
         qq.setWindow(curHwnd);
