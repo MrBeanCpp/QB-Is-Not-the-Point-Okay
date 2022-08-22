@@ -64,11 +64,12 @@ Widget::Widget(QWidget* parent)
         }
         //moveToQQSide();
         anima_trace->stop();
-        if ((getQQStickPos() - pos()).manhattanLength() > 2) { //距离过小 animate无法靠近
+        int manhattanLen = (getQQStickPos() - pos()).manhattanLength();
+        if (manhattanLen > 2) { //距离过小 animate无法靠近
             anima_trace->setStartValue(this->pos());
             anima_trace->setEndValue(getQQStickPos());
             anima_trace->start();
-        } else
+        } else if (manhattanLen > 0) //防止Still时反复触发
             moveToQQSide();
     });
 

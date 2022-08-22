@@ -22,7 +22,8 @@ public:
     QPixmap getWindowICON(HWND hwnd);
     void showWindowICON(HWND hwnd);
     void setHeight(int y);
-    void initAnimation(HWND qqHwnd);
+    void initAnimationRoute(HWND qqHwnd);
+    void setAnimationRoute(const QPoint& sPos, const QPoint& ePos);
 
 private:
     Ui::IconTip *ui;
