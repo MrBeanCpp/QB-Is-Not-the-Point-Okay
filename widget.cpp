@@ -18,6 +18,7 @@ Widget::Widget(QWidget* parent)
 
     setWindowFlag(Qt::FramelessWindowHint);
     setWindowFlag(Qt::WindowStaysOnTopHint);
+    setWindowState(Qt::WindowMinimized);
 
     setFocusPolicy(Qt::StrongFocus);
     setAcceptDrops(true);
@@ -26,7 +27,7 @@ Widget::Widget(QWidget* parent)
     //showMinimized(); //
     QtWin::taskbarDeleteTab(this); //删除任务栏图标 //showMinimized()之后delete 否则size有些不正常 或者在窗体构造之后mini
 
-    setAutoFillBackground(true); //to使用QPalette
+    setAutoFillBackground(true); //to使用QPalette 貌似不用也没事...
     setBGColor(defaultColor);
 
     sysTray = new SystemTray(this);

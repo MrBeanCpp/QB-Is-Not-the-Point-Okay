@@ -20,7 +20,7 @@ public:
     ~IconTip();
 
     QPixmap getWindowICON(HWND hwnd);
-    void showWindowICON(HWND hwnd);
+    void showWindowICON(HWND hwnd, bool autoScale = true);
     void setHeight(int y);
     void initAnimationRoute(HWND qqHwnd);
     void setAnimationRoute(const QPoint& sPos, const QPoint& ePos);

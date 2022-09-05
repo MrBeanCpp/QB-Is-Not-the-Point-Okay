@@ -4,6 +4,7 @@
 #include <QtWin>
 #include <QGraphicsDropShadowEffect>
 #include <QTimer>
+#include <QScreen>
 IconTip::IconTip(QWidget *parent)
     : QWidget(parent),
       ui(new Ui::IconTip)
@@ -50,15 +51,22 @@ QPixmap IconTip::getWindowICON(HWND hwnd)
     return QtWin::fromHICON(icon);
 }
 
-void IconTip::showWindowICON(HWND hwnd)
+void IconTip::showWindowICON(HWND hwnd, bool autoScale)
 {
-    ui->label->setPixmap(getWindowICON(hwnd));
+    QPixmap ICON = getWindowICON(hwnd);
+    if (autoScale) {
+        qreal DPIscale = qApp->primaryScreen()->logicalDotsPerInch() / 96.0;
+        qDebug() << "DPIscale:" << DPIscale;
+        ICON = ICON.scaled(QSize(32, 32) * DPIscale, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        //注意有时获取的群头像过小 需要缩放到 QSize(32, 32)
+    }
+    ui->label->setPixmap(ICON);
 }
 
 void IconTip::setHeight(int y)
 {
     QPoint startP = anima_forward->startValue().toPoint();
-    if(startP.y() == y) return;
+    if (startP.y() == y) return;
 
     QPoint endP = anima_forward->endValue().toPoint();
     startP.setY(y);
@@ -101,7 +109,7 @@ bool IconTip::nativeEvent(const QByteArray &eventType, void *message, long *resu
         if (hwnd != qq.winId() || hwnd == foreWin) return false; //排除获取焦点的情况
 
         static bool isAnimaRouteInit = false;
-        if (!isAnimaRouteInit){
+        if (!isAnimaRouteInit) {
             initAnimationRoute(qq.winId()); //not in 构造函数 防止qq.winId() == nullptr
             isAnimaRouteInit = true;
         }
