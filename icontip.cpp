@@ -53,7 +53,7 @@ QPixmap IconTip::getWindowICON(HWND hwnd)
 
 void IconTip::showWindowICON(HWND hwnd, bool autoScale)
 {
-    QPixmap ICON = getWindowICON(hwnd);
+    QPixmap ICON = getWindowICON(hwnd); //其实获取的ICON本身就已经经过缩放(by QQ)，更改系统缩放后重启QQ生效
     if (autoScale) {
         qreal DPIscale = qApp->primaryScreen()->logicalDotsPerInch() / 96.0;
         qDebug() << "DPIscale:" << DPIscale;
