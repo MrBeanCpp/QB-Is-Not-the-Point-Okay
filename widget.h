@@ -38,7 +38,7 @@ public:
 
     bool isForeMyself(void);
     QPoint getQQStickPos(void);
-    void moveQQWindow(int X, int Y = NaN, int nWidth = NaN, int nHeight = NaN, WINBOOL bRepaint = true);
+    void moveQQWindow(int X, int Y = NaN, int nWidth = NaN, int nHeight = NaN, bool bRepaint = true);
     void moveToQQSide(void);
     HWND winID(void);
     void moveIn(int duration = 500);

@@ -261,7 +261,7 @@ QPoint Widget::getQQStickPos()
     return QPoint(qqRect.right(), qqRect.top() + MarginTop);
 }
 
-void Widget::moveQQWindow(int X, int Y, int nWidth, int nHeight, WINBOOL bRepaint)
+void Widget::moveQQWindow(int X, int Y, int nWidth, int nHeight, bool bRepaint)
 {
     if (qq.isNull()) return;
 

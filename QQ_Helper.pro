@@ -53,7 +53,12 @@ RC_ICONS = images/icon.ico
 
 TARGET = "QQ Follower"
 
-LIBS += -lpsapi
+LIBS += -lpsapi -luser32
 
 RESOURCES += \
    res.qrc
+
+msvc {
+    QMAKE_CFLAGS += /utf-8
+    QMAKE_CXXFLAGS += /utf-8
+}
